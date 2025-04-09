@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import userModel from '../module/user.model.js';
 import jwt from 'jsonwebtoken';
+import transporter from '../config/nodeMailer.js';
 
 export const registerUser = async (req, res) => {
     const { name, email, password } = req.body;
@@ -24,6 +25,16 @@ export const registerUser = async (req, res) => {
              sameSite: process.env.NODE_ENV === 'production'? 'none':'strict',
              maxAge: 7*24*60*60*1000,
              })
+
+
+             const mailOptains={
+                from:process.env.SENDER_EMAIL,
+                to:email,
+                subject: 'Account Activation',
+                text:  `welcome to our website, Your account has been created with the email id: ${email}. `
+             }
+             await transporter.sendMail(mailOptains);
+
 
         res.json({ msg: 'User registered successfully' });
     } catch (error) {
@@ -71,3 +82,56 @@ export const logoutUser = async (req, res) => {
     }
 }
 
+export const sendVerifyOtp = async (req, res) => {
+    try{
+        const {userId}=req.body; //userId can we found from or stored in token 
+        const user = await userModel.findById(userId);
+        if(!user) return res.status(400).json({msg: 'User not found' });
+        
+        if(user.isAccountVerified) return res.status(400).json({msg: 'Account already verified' });
+        
+        const otp=String(Math.floor(100000 + Math.random() * 900000));
+        user.verifyOtp=otp;
+        user.verifyOtpExpireAt=Date.now() + 60*60*1000;
+
+        await user.save();
+
+        const mailOptains={
+            from:process.env.SENDER_EMAIL,
+            to:user.email,
+            subject: 'Verify OTP',
+            text:  `Your verification code is: ${otp}. `
+ 
+        }
+        await transporter.sendMail(mailOptains);
+        return res.json({success:true, msg: 'OTP sent successfully' });
+    }catch(error){
+        console.error(error.message);
+        res.status(500).send({success:false, msg: 'Server error'  });
+    }
+}
+
+export const verifyEmail = async (req, res) => {
+    const {userId, otp}=req.body; //userId can we found from or stored in token 
+    if(!userId ||!otp) return res.status(400).json({success:'false',msg: 'Please enter all fields' });
+
+    try{
+        const user = await userModel.findById(userId);
+        if(!user) return res.status(400).json({success:false, msg: 'User not found' });
+
+        if(user.verifyOtp==='' || user.verifyOtp!==otp) return res.status(400).json({msg: 'invalid OTP', success:false  });
+        
+        if(user.verifyOtpExpireAt < Date.now()) return res.status(400).json({msg: 'OTP expired' });
+        
+        user.isAccountVerified=true;
+        user.verifyOtp='';
+        user.verifyOtpExpireAt=0;
+
+        await user.save();
+
+        return res.json({success:true, msg: 'Account verified successfully' });
+    }catch(error){
+        console.error(error.message);
+        res.status(500).send({success:false, msg: 'Server error'  });
+    }
+}
