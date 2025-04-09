@@ -81,6 +81,7 @@ export const logoutUser = async (req, res) => {
     }
 }
 
+// Send verification OTP to user's registered email address 
 export const sendVerifyOtp = async (req, res) => {
     try{
         const userId=req.user.id; //userId can we found from or stored in token 
@@ -110,6 +111,7 @@ export const sendVerifyOtp = async (req, res) => {
     }
 }
 
+// Verify email using OTP
 export const verifyEmail = async (req, res) => {
     const userId=req.user?.id;
     const {otp}=req.body //userId can we found from or stored in token 
@@ -140,3 +142,46 @@ export const verifyEmail = async (req, res) => {
         res.status(500).send({success:false, msg: 'Server error'  });
     }
 }
+
+//check if user is authenticated before sending data to client side
+export const isAuthenticated = async (req, res) => {
+    try{
+        return res.json({success:true, msg: 'User authenticated' });
+    }catch(error){
+        console.error(error.message);
+        return res.json({success:false, msg: 'Server error'  });
+    }
+}
+
+
+//send password reset OTP to user's registered email address 
+export const sendResetOtp = async (req, res) => {
+    const {email}=req.body;
+    if(!email) return res.status(400).json({success:false, msg: 'Please enter email' });
+    try{
+        const user= await userModel.findOne({email});
+        if(!user) return res.status(400).json({msg: 'User not found' });
+
+        const otp=String(Math.floor(100000 + Math.random() * 900000));
+        user.resetOtp=otp;
+        user.resetOtpExpireAt=Date.now() + 15*60*1000;
+
+        
+        const mailOptains={
+            from:process.env.SENDER_EMAIL,
+            to:user.email,
+            subject: 'password Reset OTP',
+            text:  `your password reset code is: ${otp}. `
+            
+        }
+        await transporter.sendMail(mailOptains);
+        await user.save();
+        return res.json({success:true, msg: 'OTP sent successfully' });
+
+    }catch(error){
+        console.error(error.message);
+        return res.status(500).send({success:false, msg: 'Server error'  });
+    }
+}
+
+// Reset password 
