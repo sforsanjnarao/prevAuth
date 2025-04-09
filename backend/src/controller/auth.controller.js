@@ -185,3 +185,25 @@ export const sendResetOtp = async (req, res) => {
 }
 
 // Reset password 
+export const resetPassword = async (req, res) => {
+    const {email, otp, newPassword}=req.body;
+    if(!email || !otp || !newPassword) return res.status(400).json({success:false, msg: 'Please enter all fields' });
+    try{
+        const user= await userModel.findOne({email});
+        if(!user) return res.status(400).json({msg: 'User not found' });
+        if(user.resetOtp==''||user.resetOtp!== String(otp) ) return res.status(400).json({msg: 'Incorrect OTP' });
+        if(user.resetOtpExpireAt < Date.now()) return res.status(400).json({msg: 'OTP expired' });
+
+        const salt = await bcrypt.genSalt(10);
+        const hashed = await bcrypt.hash(newPassword, salt);
+        user.password=hashed;
+        user.resetOtp=''; 
+        user.resetOtpExpireAt=0;
+
+        await user.save();
+        return res.json({success:true, msg: 'Password reset successfully' });
+    }catch(error){
+        console.error(error.message);
+        return res.status(500).send({success:false, msg: 'Server error'  });
+    }
+}
