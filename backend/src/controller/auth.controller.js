@@ -17,7 +17,7 @@ export const registerUser = async (req, res) => {
         
 
         await user.save();
-        const token =jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7' });
+        const token =jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
         res.cookie('token', token, {
               
              httpOnly: true,
@@ -55,7 +55,6 @@ export const loginUser = async (req, res) => {
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
         res.cookie('token', token, {
-             expiresIn: '1h',
              httpOnly: true,
              secure: process.env.NODE_ENV === 'production',
              sameSite: process.env.NODE_ENV === 'production'? 'none':'strict',
@@ -84,7 +83,7 @@ export const logoutUser = async (req, res) => {
 
 export const sendVerifyOtp = async (req, res) => {
     try{
-        const {userId}=req.body; //userId can we found from or stored in token 
+        const userId=req.user.id; //userId can we found from or stored in token 
         const user = await userModel.findById(userId);
         if(!user) return res.status(400).json({msg: 'User not found' });
         
@@ -92,18 +91,18 @@ export const sendVerifyOtp = async (req, res) => {
         
         const otp=String(Math.floor(100000 + Math.random() * 900000));
         user.verifyOtp=otp;
-        user.verifyOtpExpireAt=Date.now() + 60*60*1000;
+        user.verifyOtpExpireAt=Date.now() + 24*60*60*1000;
 
-        await user.save();
-
+        
         const mailOptains={
             from:process.env.SENDER_EMAIL,
             to:user.email,
             subject: 'Verify OTP',
             text:  `Your verification code is: ${otp}. `
- 
+            
         }
         await transporter.sendMail(mailOptains);
+        await user.save();
         return res.json({success:true, msg: 'OTP sent successfully' });
     }catch(error){
         console.error(error.message);
@@ -112,19 +111,25 @@ export const sendVerifyOtp = async (req, res) => {
 }
 
 export const verifyEmail = async (req, res) => {
-    const {userId, otp}=req.body; //userId can we found from or stored in token 
-    if(!userId ||!otp) return res.status(400).json({success:'false',msg: 'Please enter all fields' });
+    const userId=req.user?.id;
+    const {otp}=req.body //userId can we found from or stored in token 
+    console.log(userId, otp);
+    if(!userId || !otp) return res.status(400).json({success:'false',msg: 'Please enter all fields' });
 
     try{
         const user = await userModel.findById(userId);
         if(!user) return res.status(400).json({success:false, msg: 'User not found' });
+        console.log(user.verifyOtp)
 
-        if(user.verifyOtp==='' || user.verifyOtp!==otp) return res.status(400).json({msg: 'invalid OTP', success:false  });
-        
+        // Check if OTP matches
+        if(user.verifyOtp!== String(otp) ) return res.status(400).json({msg: 'Incorrect OTP' });
+    
+
+        // Check if OTP is expired
         if(user.verifyOtpExpireAt < Date.now()) return res.status(400).json({msg: 'OTP expired' });
         
         user.isAccountVerified=true;
-        user.verifyOtp='';
+        user.verifyOtp=''; 
         user.verifyOtpExpireAt=0;
 
         await user.save();
