@@ -38,7 +38,8 @@ const userSchema = new mongoose.Schema({
     resetOtpExpireAt: {
         type: Number,
         default: 0
-    }
+    },
+    refreshToken: [String]
 })
 
 const userModel = mongoose.model.user || mongoose.model('User', userSchema);

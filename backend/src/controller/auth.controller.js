@@ -2,6 +2,8 @@ import bcrypt from 'bcryptjs';
 import userModel from '../module/user.model.js';
 import jwt from 'jsonwebtoken';
 import transporter from '../config/nodeMailer.js';
+import {config} from "dotenv"
+ 
 
 export const registerUser = async (req, res) => {
     const { name, email, password } = req.body;
@@ -53,14 +55,38 @@ export const loginUser = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ msg: 'Incorrect password' });
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-        res.cookie('token', token, {
+        const accessToken = jwt.sign(
+            { id: user._id }, 
+            process.env.ACCESS_TOKEN_SECRET, 
+            { expiresIn: '1d' }
+        );
+        const refreshToken = jwt.sign(
+            { id: user._id }, 
+            process.env.REFRESH_TOKEN_SECRET,
+             { expiresIn: '7d' }
+            );
+
+            //Save refreshToken in user
+            user.refreshToken.push(refreshToken);
+            await user.save();
+
+        //saving refreshToken with current user's data in array of all users
+        // const otherUsers=await userModel.filter(person=>person._id.toString()!== user._id.toString());
+        // const currentUser={...user, refreshToken };
+        // userModel.setUsers([...otherUsers, currentUser]);
+
+        //// Send refresh token as HttpOnly cookie
+        res.cookie('refreshToken', refreshToken, {
              httpOnly: true,
              secure: process.env.NODE_ENV === 'production',
              sameSite: process.env.NODE_ENV === 'production'? 'none':'strict',
              maxAge: 7*24*60*60*1000,
              })
-             return res.json({ success: true, msg: 'User logged in successfully' });
+             return res.json({
+                 success: true, 
+                 msg: 'User logged in successfully',
+                accessToken // send to frontend via response body
+             });
     }catch (error) {
         console.error(error.message);
         res.status(500).send({success:false, msg: 'Server error'  });
@@ -207,3 +233,59 @@ export const resetPassword = async (req, res) => {
         return res.status(500).send({success:false, msg: 'Server error'  });
     }
 }
+
+export const refreshTokenHandler = async (req, res) => {
+    const cookies = req.cookies;
+    if (!cookies?.refreshToken) {
+        return res.status(401).json({ success: false, msg: 'Refresh token missing' });
+    }
+
+    const oldRefreshToken = cookies.refreshToken;
+
+    try {
+        // Find user with this refresh token
+        const user = await userModel.findOne({ refreshToken: oldRefreshToken });
+        if (!user) {
+            return res.status(403).json({ success: false, msg: 'Invalid refresh token' });
+        }
+
+        // Verify token
+        jwt.verify(oldRefreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, decoded) => {
+            if (err || decoded.id !== user._id.toString()) {
+                return res.status(403).json({ success: false, msg: 'Token invalid or expired' });
+            }
+
+            // Token is valid → rotate it
+            const newRefreshToken = jwt.sign(
+                { id: user._id },
+                process.env.REFRESH_TOKEN_SECRET,
+                { expiresIn: '7d' }
+            );
+
+            // Remove old token and add new one
+            user.refreshToken = user.refreshToken.filter(t => t !== oldRefreshToken);
+            user.refreshToken.push(newRefreshToken);
+            await user.save();
+
+            // Set new cookie
+            res.cookie('refreshToken', newRefreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+            });
+
+            // Issue new access token
+            const newAccessToken = jwt.sign(
+                { id: user._id },
+                process.env.ACCESS_TOKEN_SECRET,
+                { expiresIn: '1d' }
+            );
+
+            return res.json({ success: true, accessToken: newAccessToken });
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, msg: 'Server error' });
+    }
+};

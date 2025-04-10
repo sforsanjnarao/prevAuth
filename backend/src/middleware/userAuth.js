@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-const userAuth=async(req, res, next) => {
+export const userAuth=async(req, res, next) => {
     const token=req.cookies.token;
 
     if(!token) return res.status(401).json({msg: 'Not authorized, token is required',success: false  });
@@ -22,4 +22,13 @@ const userAuth=async(req, res, next) => {
     }
 }
 
-export default userAuth;
+export const verifyJWT=(req, res, next) => {
+    const authHeader=req.headers['authorization'];
+    if(!authHeader) return res.status(401).json({msg: 'Not authorized, token is required',success: false  });
+    const token=authHeader.split(' ')[1];
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if(err) return res.status(403).json({msg: 'Token is not valid', success: false });
+        req.user=user;
+        next();
+    });
+}
