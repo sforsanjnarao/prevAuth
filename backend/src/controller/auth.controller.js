@@ -2,16 +2,24 @@ import bcrypt from 'bcryptjs';
 import userModel from '../module/user.model.js';
 import jwt from 'jsonwebtoken';
 import transporter from '../config/nodeMailer.js';
-import {config} from "dotenv"
+import { tryCatch } from '../utils/tryCatch.js';
+import AppError from '../utils/AppError.js';
+import authServices from '../services/service.js';
  
 
-export const registerUser = async (req, res) => {
+export const registerUser = tryCatch(async (req, res) => {
     const { name, email, password } = req.body;
     if (!name ||!email ||!password) return res.status(400).json({success:false, msg: 'Please enter all fields' });
-    try {
-        const existingUser = await userModel.findOne({ email });
+    
+        const existingUser = await userModel.findOne({ email:email });
 
-        if (existingUser) return res.status(400).json({ msg: 'User already exists' });
+        if (existingUser)  {
+            throw new AppError(
+                409,
+                "Email already exists in the database!",
+                409
+            )
+        }
         const salt = await bcrypt.genSalt(10);
         const hashed = await bcrypt.hash(password, salt);
 
@@ -19,8 +27,12 @@ export const registerUser = async (req, res) => {
         
 
         await user.save();
-        const token =jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-        res.cookie('token', token, {
+        try {
+            const response=await authServices.SignUp(email, password);
+            const accessToken=response.token.accesstoken;
+            const refreshToken = response.token.refreshtoken;
+        // const token =jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        res.cookie('jwt', refreshToken, {
               
              httpOnly: true,
              secure: process.env.NODE_ENV === 'production',
@@ -38,12 +50,12 @@ export const registerUser = async (req, res) => {
              await transporter.sendMail(mailOptains);
 
 
-        res.json({ msg: 'User registered successfully' });
+        res.json({accessToken:accessToken, msg: 'User registered successfully' });
     } catch (error) {
         console.error(error.message);
         res.status(500).send({success:false, msg: 'Server error'  });
     }
-}
+})
 
 export const loginUser = async (req, res) => {
     const { email, password } = req.body;
@@ -85,7 +97,7 @@ export const loginUser = async (req, res) => {
              return res.json({
                  success: true, 
                  msg: 'User logged in successfully',
-                accessToken // send to frontend via response body
+                accessToken , refreshToken// send to frontend via response body
              });
     }catch (error) {
         console.error(error.message);

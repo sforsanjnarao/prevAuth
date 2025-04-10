@@ -41,7 +41,26 @@ const userSchema = new mongoose.Schema({
     },
     refreshToken: [String]
 })
+userSchema.methods.generateAuthToken = function () {
+    const accesstoken = jwt.sign(
+      { _id: this._id },
+      process.env.ACCESS_SECRET_KEY,
+      {
+        expiresIn: "10s",
+      }
+    );
+    const refreshtoken = jwt.sign(
+      { _id: this._id },
+      process.env.REFRESH_SECRET_KEY,
+      { expiresIn: "1d" }
+    );
+  
+    const tokens = { accesstoken: accesstoken, refreshtoken: refreshtoken };
+    return tokens;
+  };
+  
 
 const userModel = mongoose.model.user || mongoose.model('User', userSchema);
 
 export default userModel;
+// exports.User = User;
