@@ -25,10 +25,35 @@ export const userAuth=async(req, res, next) => {
 export const verifyJWT=(req, res, next) => {
     const authHeader=req.headers['authorization'];
     if(!authHeader) return res.status(401).json({msg: 'Not authorized, token is required',success: false  });
-    const token=authHeader.split(' ')[1];
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    const token=authHeader.split('Bearer ')[1];
+    
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    console.log(decoded)
+
         if(err) return res.status(403).json({msg: 'Token is not valid', success: false });
-        req.user=user;
+        req.user=decoded.username;
         next();
     });
 }
+
+export const protectRoute = (req, res, next) => {
+    let token = null;
+  
+    if (req.headers.authorization?.startsWith("Bearer")) {
+      token = req.headers.authorization.split(" ")[1];
+    } else if (req.cookies.token) {
+      token = req.cookies.token;
+    }
+  
+    if (!token) {
+      return res.status(401).json({ success: false, msg: "No token provided" });
+    }
+  
+    try {
+      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+      req.user = decoded;
+      next();
+    } catch (err) {
+      return res.status(403).json({ success: false, msg: "Invalid token" });
+    }
+  };
