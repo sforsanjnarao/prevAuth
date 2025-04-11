@@ -139,7 +139,19 @@ export const logoutUser = tryCatch(
             const refreshToken=cookies.jwt;
             //is refresh token in db?
             const foundUser=await userModel.findOne({ refreshToken: refreshToken });
-            
+
+            if(!foundUser){
+                res.clearCookie('jwt',{
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: process.env.NODE_ENV === 'production'? 'none':'strict',
+                });
+                return res.status(200).json({ success: true, msg: 'User logged out successfully' });
+            }
+
+            //delete refresh token from db
+            foundUser.refreshToken=foundUser.refreshToken.filter(token=>token!==refreshToken);
+            await foundUser.save();
             res.clearCookie('token',{
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
@@ -279,5 +291,70 @@ export const resetPassword = async (req, res) => {
         return res.status(500).send({success:false, msg: 'Server error'  });
     }
 }
+
+export const refreshToken=tryCatch(async (req, res) => {
+    const cookies=req.cookies;
+    if(!cookies?.jwt) return res.status(401).json({msg: 'No token, authorization denied' });
+    const refreshToken=cookies.jwt;
+    res.clearCookie('jwt',{
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production'? 'none':'strict',
+    })
+
+    const foundUser=await userModel.findOne({ refreshToken: refreshToken });
+    if(!foundUser){
+        jwt.verify(
+            refreshToken,
+            process.env.REFRESH_TOKEN_SECRET,
+            async (err,decode) => {
+                if(err) return res.status(403).json({msg: 'Token is not valid, authorization denied' }); //forbidden
+                const hackedUser=await userModel.findOne({username: decode._id});
+                hackedUser.refreshToken=[]
+                const result=await hackedUser.save();
+            }
+        )
+        return res.status(403).json({msg: 'Token is not valid, authorization denied' });
+    }
+    const newRefreshTokenArray=foundUser.refreshToken.filter(token=>token!==refreshToken);
+
+    //evaluate jwt
+    jwt.verify(
+        refreshToken,
+        process.env.REFRESH_TOKEN_SECRET,
+        async (err,decode) => {
+            if(err){
+                foundUser.refreshToken=[...newRefreshTokenArray];
+                const result=await foundUser.save();
+            }
+            if(err||foundUser._id.toString()!==decode.id){
+                return res.status(403).json({msg: 'Token is not valid, authorization denied' });
+            }
+            //refreshToken still valid
+            const accessToken=jwt.sign(
+                {id: foundUser._id},
+                process.env.ACCESS_TOKEN_SECRET,
+                { expiresIn: '15m' }
+            );
+            const newRefreshToken=jwt.sign(
+                {id: foundUser._id},
+                process.env.REFRESH_TOKEN_SECRET,
+                { expiresIn: '1d' }
+            );
+            foundUser.refreshtoken = [...newRefreshTokenArray, newRefreshToken];
+            const result=await foundUser.save();
+            res.cookie("jwt", newRefreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production'? 'none':'strict',
+                maxAge: 24 * 60 * 60  * 1000, // 1 days
+            });
+            return res.json({ success: true, accessToken, msg: 'Token refreshed successfully' });
+            
+        }
+    )
+
+})
+
 
  
