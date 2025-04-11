@@ -4,11 +4,11 @@ import jwt from 'jsonwebtoken';
 import transporter from '../config/nodeMailer.js';
 import { tryCatch } from '../utils/tryCatch.js';
 import AppError from '../utils/AppError.js';
-import authServices from '../services/service.js';
+import {LoginUser, RegisterUser} from '../services/service.js';
  
 
-export const registerUser = tryCatch(async (req, res) => {
-    const { name, email, password } = req.body;
+export const registerUser = async (req, res) => {
+    const {name,email,password } = req.body;
     if (!name ||!email ||!password) return res.status(400).json({success:false, msg: 'Please enter all fields' });
     
         const existingUser = await userModel.findOne({ email:email });
@@ -20,15 +20,15 @@ export const registerUser = tryCatch(async (req, res) => {
                 409
             )
         }
-        const salt = await bcrypt.genSalt(10);
-        const hashed = await bcrypt.hash(password, salt);
+        // const salt = await bcrypt.genSalt(10);
+        // const hashed = await bcrypt.hash(password, salt);
 
-        const user =new userModel({ name, email, password:hashed });
+        // const user =new userModel({ name, email, password:hashed });
         
 
-        await user.save();
+        // await user.save();
         try {
-            const response=await authServices.SignUp(email, password);
+            const response=await RegisterUser(email, password); //we need to see this
             const accessToken=response.token.accesstoken;
             const refreshToken = response.token.refreshtoken;
         // const token =jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -37,87 +37,121 @@ export const registerUser = tryCatch(async (req, res) => {
              httpOnly: true,
              secure: process.env.NODE_ENV === 'production',
              sameSite: process.env.NODE_ENV === 'production'? 'none':'strict',
-             maxAge: 7*24*60*60*1000,
+             maxAge: 24*60*60*1000,
              })
 
 
-             const mailOptains={
+             const mailOptions={
                 from:process.env.SENDER_EMAIL,
                 to:email,
                 subject: 'Account Activation',
                 text:  `welcome to our website, Your account has been created with the email id: ${email}. `
              }
-             await transporter.sendMail(mailOptains);
+             await transporter.sendMail(mailOptions);
 
 
-        res.json({accessToken:accessToken, msg: 'User registered successfully' });
+        return res.status(201).json({accessToken:accessToken, msg: 'User registered successfully' });
     } catch (error) {
         console.error(error.message);
         res.status(500).send({success:false, msg: 'Server error'  });
     }
-})
-
-export const loginUser = async (req, res) => {
-    const { email, password } = req.body;
-    if (!email ||!password) return res.status(400).json({ success:false, msg: 'Please enter all fields' });
-    try{
-        const user = await userModel.findOne({ email });
-        if (!user) return res.status(400).json({ msg: 'User not found' });
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ msg: 'Incorrect password' });
-
-        const accessToken = jwt.sign(
-            { id: user._id }, 
-            process.env.ACCESS_TOKEN_SECRET, 
-            { expiresIn: '1d' }
-        );
-        const refreshToken = jwt.sign(
-            { id: user._id }, 
-            process.env.REFRESH_TOKEN_SECRET,
-             { expiresIn: '7d' }
-            );
-
-            //Save refreshToken in user
-            user.refreshToken.push(refreshToken);
-            await user.save();
-
-        //saving refreshToken with current user's data in array of all users
-        // const otherUsers=await userModel.filter(person=>person._id.toString()!== user._id.toString());
-        // const currentUser={...user, refreshToken };
-        // userModel.setUsers([...otherUsers, currentUser]);
-
-        //// Send refresh token as HttpOnly cookie
-        res.cookie('refreshToken', refreshToken, {
-             httpOnly: true,
-             secure: process.env.NODE_ENV === 'production',
-             sameSite: process.env.NODE_ENV === 'production'? 'none':'strict',
-             maxAge: 7*24*60*60*1000,
-             })
-             return res.json({
-                 success: true, 
-                 msg: 'User logged in successfully',
-                accessToken , refreshToken// send to frontend via response body
-             });
-    }catch (error) {
-        console.error(error.message);
-        res.status(500).send({success:false, msg: 'Server error'  });
-    }
 }
 
-export const logoutUser = async (req, res) => {
-    try{
-        res.clearCookie('token',{
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production'? 'none':'strict',
-        });
-        return res.json({ success: true, msg: 'User logged out successfully' });
-    }catch (error) {
-        console.error(error.message);
-        res.status(500).send({success:false, msg: 'Server error'  });
+export const loginUser = tryCatch(
+    async (req, res) => {
+        const cookies=req.cookies
+        const { email, password } = req.body;
+        if (!email ||!password) return res.status(400).json({ success:false, msg: 'Please enter all fields' });
+       
+            const user = await userModel.findOne({ email:email });
+            if (!user)  {
+                throw new AppError(
+                    404,
+                    "User not found in the database!",
+                    404
+                )
+            }
+    
+            const validPassword = await bcrypt.compare(password, user.password);
+            if (!validPassword)  {
+                throw new AppError(
+                    401,
+                    "Incorrect password! Please double-check your password and try again.",
+                    401
+                )
+            }
+            try{
+             let newRefreshTokenArray="";
+             let refreshToken=''
+
+             // Check if user has an existing refresh token
+             if(!cookies?.jwt){
+                refreshToken=user.refreshToken
+             }else{
+                refreshToken=cookies.jwt
+                const foundToken=await userModel.findOne({ refreshToken: refreshToken }).exec();
+
+                if(!foundToken){
+                    console.log('attempted refresh token reuse at login')
+                    // If the token is not found in the database, clear out the cookie
+                    res.clearCookie('jwt',{
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === 'production',
+                        sameSite: process.env.NODE_ENV === 'production'? 'none':'strict',
+                    });
+                    return res.status(403).json({ success: false, msg: "Potential refresh token reuse!" });
+                }
+             }
+             const response=await LoginUser(user, newRefreshTokenArray); //din't make this line till now
+             const accessToken=response.token.accesstoken;
+
+             //what is this profilePic doing?
+             const profilePic = response.profilePic;
+
+                    
+
+    
+            //// Send refresh token as HttpOnly cookie
+            res.cookie('jwt', refreshToken, {
+                 httpOnly: true,
+                 secure: process.env.NODE_ENV === 'production',
+                 sameSite: process.env.NODE_ENV === 'production'? 'none':'strict',
+                 maxAge: 24*60*60*1000,
+                 })
+                 return res.status(200)
+                 .json({
+                     accessToken: accessToken, // send to frontend via response body
+                     success: true, 
+                     msg: 'User logged in successfully'
+                 });
+        }catch (error) {
+            console.error(error.message);
+            res.status(500).send({success:false, msg: 'Server error'  });
+        }
     }
-}
+)
+
+export const logoutUser = tryCatch(
+    async (req, res) => {
+        try{
+            const cookies=req.cookies;
+            if(!cookies?.jwt) return res.send.status(204);
+            const refreshToken=cookies.jwt;
+            //is refresh token in db?
+            const foundUser=await userModel.findOne({ refreshToken: refreshToken });
+            
+            res.clearCookie('token',{
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production'? 'none':'strict',
+            });
+            return res.json({ success: true, msg: 'User logged out successfully' });
+        }catch (error) {
+            console.error(error.message);
+            res.status(500).send({success:false, msg: 'Server error'  });
+        }
+    }
+)
 
 // Send verification OTP to user's registered email address 
 export const sendVerifyOtp = async (req, res) => {
@@ -133,14 +167,14 @@ export const sendVerifyOtp = async (req, res) => {
         user.verifyOtpExpireAt=Date.now() + 24*60*60*1000;
 
         
-        const mailOptains={
+        const mailOptions={
             from:process.env.SENDER_EMAIL,
             to:user.email,
             subject: 'Verify OTP',
             text:  `Your verification code is: ${otp}. `
             
         }
-        await transporter.sendMail(mailOptains);
+        await transporter.sendMail(mailOptions);
         await user.save();
         return res.json({success:true, msg: 'OTP sent successfully' });
     }catch(error){
@@ -205,14 +239,14 @@ export const sendResetOtp = async (req, res) => {
         user.resetOtpExpireAt=Date.now() + 15*60*1000;
 
         
-        const mailOptains={
+        const mailOptions={
             from:process.env.SENDER_EMAIL,
             to:user.email,
             subject: 'password Reset OTP',
             text:  `your password reset code is: ${otp}. `
             
         }
-        await transporter.sendMail(mailOptains);
+        await transporter.sendMail(mailOptions);
         await user.save();
         return res.json({success:true, msg: 'OTP sent successfully' });
 
@@ -246,58 +280,4 @@ export const resetPassword = async (req, res) => {
     }
 }
 
-export const refreshTokenHandler = async (req, res) => {
-    const cookies = req.cookies;
-    if (!cookies?.refreshToken) {
-        return res.status(401).json({ success: false, msg: 'Refresh token missing' });
-    }
-
-    const oldRefreshToken = cookies.refreshToken;
-
-    try {
-        // Find user with this refresh token
-        const user = await userModel.findOne({ refreshToken: oldRefreshToken });
-        if (!user) {
-            return res.status(403).json({ success: false, msg: 'Invalid refresh token' });
-        }
-
-        // Verify token
-        jwt.verify(oldRefreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, decoded) => {
-            if (err || decoded.id !== user._id.toString()) {
-                return res.status(403).json({ success: false, msg: 'Token invalid or expired' });
-            }
-
-            // Token is valid → rotate it
-            const newRefreshToken = jwt.sign(
-                { id: user._id },
-                process.env.REFRESH_TOKEN_SECRET,
-                { expiresIn: '7d' }
-            );
-
-            // Remove old token and add new one
-            user.refreshToken = user.refreshToken.filter(t => t !== oldRefreshToken);
-            user.refreshToken.push(newRefreshToken);
-            await user.save();
-
-            // Set new cookie
-            res.cookie('refreshToken', newRefreshToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-                maxAge: 7 * 24 * 60 * 60 * 1000,
-            });
-
-            // Issue new access token
-            const newAccessToken = jwt.sign(
-                { id: user._id },
-                process.env.ACCESS_TOKEN_SECRET,
-                { expiresIn: '1d' }
-            );
-
-            return res.json({ success: true, accessToken: newAccessToken });
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, msg: 'Server error' });
-    }
-};
+ 

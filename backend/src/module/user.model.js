@@ -1,11 +1,13 @@
 import mongoose from "mongoose";
+import jwt from 'jsonwebtoken';
 
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
         minlength: 3,
-        maxlength: 50
+        maxlength: 50,
+        default: 'user',
     },
     email: {
         type: String,
@@ -44,14 +46,14 @@ const userSchema = new mongoose.Schema({
 userSchema.methods.generateAuthToken = function () {
     const accesstoken = jwt.sign(
       { _id: this._id },
-      process.env.ACCESS_SECRET_KEY,
+      process.env.ACCESS_TOKEN_SECRET,
       {
         expiresIn: "10s",
       }
     );
     const refreshtoken = jwt.sign(
       { _id: this._id },
-      process.env.REFRESH_SECRET_KEY,
+      process.env.REFRESH_TOKEN_SECRET,
       { expiresIn: "1d" }
     );
   
