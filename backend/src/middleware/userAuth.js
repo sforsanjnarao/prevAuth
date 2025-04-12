@@ -1,26 +1,26 @@
 import jwt from 'jsonwebtoken';
 
-export const userAuth=async(req, res, next) => {
-    const token=req.cookies.token;
+// export const userAuth=async(req, res, next) => {
+//     const token=req.cookies.token;
 
-    if(!token) return res.status(401).json({msg: 'Not authorized, token is required',success: false  });
+//     if(!token) return res.status(401).json({msg: 'Not authorized, token is required',success: false  });
 
-    try{
-        const decoded=jwt.verify(token, process.env.JWT_SECRET);
-        console.log(decoded);
+//     try{
+//         const decoded=jwt.verify(token, process.env.JWT_SECRET);
+//         console.log(decoded);
  
-        if (!decoded?.id) {
-            return res.status(401).json({ msg: 'Token is not valid', success: false });
-          }
+//         if (!decoded?.id) {
+//             return res.status(401).json({ msg: 'Token is not valid', success: false });
+//           }
           
       
-          req.user= decoded;
+//           req.user= decoded;
 
-        next();
-    }catch(error){
-        res.status(401).json({msg: 'Token is invalid lala',error, success: false  });
-    }
-}
+//         next();
+//     }catch(error){
+//         res.status(401).json({msg: 'Token is invalid lala',error, success: false  });
+//     }
+// }
 
 export const verifyJWT=(req, res, next) => {
     const authHeader=req.headers['authorization'];
@@ -31,29 +31,29 @@ export const verifyJWT=(req, res, next) => {
     console.log(decoded)
 
         if(err) return res.status(403).json({msg: 'Token is not valid', success: false });
-        req.user=decoded.username;
+        req.user=decoded;
         next();
     });
 }
 
-export const protectRoute = (req, res, next) => {
-    let token = null;
+// export const protectRoute = (req, res, next) => {
+//     let token = null;
   
-    if (req.headers.authorization?.startsWith("Bearer")) {
-      token = req.headers.authorization.split(" ")[1];
-    } else if (req.cookies.token) {
-      token = req.cookies.token;
-    }
+//     if (req.headers.authorization?.startsWith("Bearer")) {
+//       token = req.headers.authorization.split(" ")[1];
+//     } else if (req.cookies.token) {
+//       token = req.cookies.token;
+//     }
   
-    if (!token) {
-      return res.status(401).json({ success: false, msg: "No token provided" });
-    }
+//     if (!token) {
+//       return res.status(401).json({ success: false, msg: "No token provided" });
+//     }
   
-    try {
-      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-      req.user = decoded;
-      next();
-    } catch (err) {
-      return res.status(403).json({ success: false, msg: "Invalid token" });
-    }
-  };
+//     try {
+//       const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+//       req.user = decoded;
+//       next();
+//     } catch (err) {
+//       return res.status(403).json({ success: false, msg: "Invalid token" });
+//     }
+//   };

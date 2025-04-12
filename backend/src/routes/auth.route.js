@@ -1,6 +1,6 @@
 import express from 'express';
 const router=express.Router();
-import {userAuth} from '../middleware/userAuth.js';
+import {verifyJWT} from '../middleware/userAuth.js';
 // import { verifyJWT } from '../middleware/verifyJWT.js';
 
 
@@ -8,10 +8,10 @@ import { registerUser, loginUser, logoutUser,sendVerifyOtp,verifyEmail,isAuthent
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);
-router.post('/logout', logoutUser);
-router.post('/send-verify-otp',userAuth,sendVerifyOtp );
-router.post('/verify-email',userAuth,verifyEmail );
-router.post('/is-auth',userAuth,isAuthenticated);
+router.post('/logout',verifyJWT, logoutUser);
+router.post('/send-verify-otp', verifyJWT,sendVerifyOtp );
+router.post('/verify-email', verifyJWT,verifyEmail );
+router.post('/is-auth', verifyJWT,isAuthenticated);
 router.post('/send-reset-otp',sendResetOtp);
 router.post('/reset-password',resetPassword);
 
