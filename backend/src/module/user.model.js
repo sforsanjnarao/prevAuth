@@ -44,7 +44,6 @@ const userSchema = new mongoose.Schema({
     refreshToken: [
         {
             type: String,
-            required: true,
         }
     ]
 })
@@ -53,7 +52,7 @@ userSchema.methods.generateAuthToken = function () {
       { _id: this._id },
       process.env.ACCESS_TOKEN_SECRET,
       {
-        expiresIn: "10s",
+        expiresIn: "15m",
       }
     );
     const refreshtoken = jwt.sign(

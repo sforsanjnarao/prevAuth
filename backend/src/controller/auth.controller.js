@@ -12,7 +12,7 @@ export const registerUser = async (req, res) => {
     if (!name ||!email ||!password) return res.status(400).json({success:false, msg: 'Please enter all fields' });
     
         const existingUser = await userModel.findOne({ email:email });
-
+        
         if (existingUser)  {
             throw new AppError(
                 409,
@@ -22,16 +22,19 @@ export const registerUser = async (req, res) => {
         }
         // const salt = await bcrypt.genSalt(10);
         // const hashed = await bcrypt.hash(password, salt);
-
+        
         // const user =new userModel({ name, email, password:hashed });
         
-
+        
         // await user.save();
         try {
             const response=await RegisterUser(email, password); //we need to see this
+            console.log('before=>',req.cookies) //with response we are 
             const accessToken=response.token.accesstoken;
-            const refreshToken = response.token.refreshtoken;
-        // const token =jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+            // console.log('accessToken',accessToken)
+            const refreshToken = response.token.refreshtoken; // what ever the value we are getting in access or refresht token is totly depended on generateAuthToken method.
+            // console.log('refreshToken', refreshToken)
+            // const token =jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
         res.cookie('jwt', refreshToken, {
               
              httpOnly: true,
@@ -40,6 +43,7 @@ export const registerUser = async (req, res) => {
              maxAge: 24*60*60*1000,
              })
 
+             console.log(req.cookies)
 
              const mailOptions={
                 from:process.env.SENDER_EMAIL,
@@ -50,7 +54,9 @@ export const registerUser = async (req, res) => {
              await transporter.sendMail(mailOptions);
 
 
-        return res.status(201).json({accessToken:accessToken, msg: 'User registered successfully' });
+
+
+        return res.status(201).json({accessToken:accessToken,refreshToken:refreshToken, msg: 'User registered successfully' });
     } catch (error) {
         console.error(error.message);
         res.status(500).send({success:false, msg: 'Server error'  });
@@ -60,6 +66,7 @@ export const registerUser = async (req, res) => {
 export const loginUser = tryCatch(
     async (req, res) => {
         const cookies=req.cookies
+        // console.log('cookies:=>',cookies)
         const { email, password } = req.body;
         if (!email ||!password) return res.status(400).json({ success:false, msg: 'Please enter all fields' });
        
@@ -85,14 +92,20 @@ export const loginUser = tryCatch(
              let refreshToken=''
 
              // Check if user has an existing refresh token
-             if(!cookies?.jwt){
+        console.log('cookie.jwt', cookies.jwt) //giving [null] value when u login at second time
+             if(!cookies?.jwt){ //this only running when it's false
+                console.log('i condition is runing on !cookies.jwt')
                 refreshToken=user.refreshToken
              }else{
+                // console.log('hello world2') //this part is running
+
                 refreshToken=cookies.jwt
+                console.log('refreshTonken in loginUser:',refreshToken) //null array
                 const foundToken=await userModel.findOne({ refreshToken: refreshToken });
+                console.log('lala',foundToken)
 
                 if(!foundToken){
-                    console.log('attempted refresh token reuse at login')
+                    // console.log('attempted refresh token reuse at login')
                     // If the token is not found in the database, clear out the cookie
                     res.clearCookie('jwt',{
                         httpOnly: true,
@@ -104,6 +117,7 @@ export const loginUser = tryCatch(
              }
              const response=await LoginUser(user, newRefreshTokenArray); //din't make this line till now
              const accessToken=response.token.accesstoken;
+             const newRefreshToken=response.token.refreshtoken;
 
              //what is this profilePic doing?
              const profilePic = response.profilePic;
