@@ -28,122 +28,102 @@ export const registerUser = async (req, res) => {
         
         // await user.save();
         try {
-            const response=await RegisterUser(email, password); //we need to see this
-            console.log('before=>',req.cookies) //with response we are 
-            const accessToken=response.token.accesstoken;
-            // console.log('accessToken',accessToken)
-            const refreshToken = response.token.refreshtoken; // what ever the value we are getting in access or refresht token is totly depended on generateAuthToken method.
-            // console.log('refreshToken', refreshToken)
-            // const token =jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+            const { accessToken, refreshToken, userId } = await RegisterUser(name, email, password);
+
         res.cookie('jwt', refreshToken, {
-              
-             httpOnly: true,
-             secure: process.env.NODE_ENV === 'production',
-             sameSite: process.env.NODE_ENV === 'production'? 'none':'strict',
-             maxAge: 24*60*60*1000,
-             })
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+            maxAge: 24 * 60 * 60 * 1000 // 1 day
+        });
 
-             console.log(req.cookies)
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL,
+            to: email,
+            subject: 'Account Activation',
+            text: `Welcome to our website! Your account has been created with email ID: ${email}.`
+        };
 
-             const mailOptions={
-                from:process.env.SENDER_EMAIL,
-                to:email,
-                subject: 'Account Activation',
-                text:  `welcome to our website, Your account has been created with the email id: ${email}. `
-             }
-             await transporter.sendMail(mailOptions);
+        await transporter.sendMail(mailOptions);
 
-
-
-
-        return res.status(201).json({accessToken:accessToken,refreshToken:refreshToken, msg: 'User registered successfully' });
+        return res.status(201).json({
+            success: true,
+            msg: 'User registered successfully',
+            accessToken,
+            userId
+        });
     } catch (error) {
         console.error(error.message);
         res.status(500).send({success:false, msg: 'Server error'  });
     }
 }
 
-export const loginUser = tryCatch(
-    async (req, res) => {
-        const cookies=req.cookies
-        // console.log('cookies:=>',cookies)
-        const { email, password } = req.body;
-        if (!email ||!password) return res.status(400).json({ success:false, msg: 'Please enter all fields' });
-       
-            const user = await userModel.findOne({ email:email });
-            if (!user)  {
-                throw new AppError(
-                    404,
-                    "User not found in the database!",
-                    404
-                )
-            }
-    
-            const validPassword = await bcrypt.compare(password, user.password);
-            if (!validPassword)  {
-                throw new AppError(
-                    401,
-                    "Incorrect password! Please double-check your password and try again.",
-                    401
-                )
-            }
-            try{
-             let newRefreshTokenArray=[]; //problem-> 
-             let refreshToken=''
-
-             // Check if user has an existing refresh token
-        console.log('cookie.jwt', cookies.jwt) //giving [null] value when u login at second time
-             if(!cookies?.jwt){ //this only running when it's false
-                console.log('i condition is runing on !cookies.jwt')
-                refreshToken=user.refreshToken
-             }else{
-                // console.log('hello world2') //this part is running
-
-                refreshToken=cookies.jwt
-                console.log('refreshTonken in loginUser:',refreshToken) //null array
-                const foundToken=await userModel.findOne({ refreshToken: refreshToken });
-                console.log('lala',foundToken)
-
-                if(!foundToken){
-                    // console.log('attempted refresh token reuse at login')
-                    // If the token is not found in the database, clear out the cookie
-                    res.clearCookie('jwt',{
-                        httpOnly: true,
-                        secure: process.env.NODE_ENV === 'production',
-                        sameSite: process.env.NODE_ENV === 'production'? 'none':'strict',
-                    });
-                    return res.status(403).json({ success: false, msg: "Potential refresh token reuse!" });
-                }
-             }
-             const response=await LoginUser(user, newRefreshTokenArray); //din't make this line till now
-             const accessToken=response.token.accesstoken;
-             const newRefreshToken=response.token.refreshtoken;
-
-             //what is this profilePic doing?
-             const profilePic = response.profilePic;
-
-                    
-
-    
-            //// Send refresh token as HttpOnly cookie
-            res.cookie('jwt', refreshToken, {
-                 httpOnly: true,
-                 secure: process.env.NODE_ENV === 'production',
-                 sameSite: process.env.NODE_ENV === 'production'? 'none':'strict',
-                 maxAge: 24*60*60*1000,
-                 })
-                 return res.status(200)
-                 .json({
-                     accessToken: accessToken, // send to frontend via response body
-                     success: true, 
-                     msg: 'User logged in successfully'
-                 });
-        }catch (error) {
-            console.error(error.message);
-            res.status(500).send({success:false, msg: 'Server error'  });
-        }
+export const loginUser = tryCatch(async (req, res) => {
+    const { email, password } = req.body;
+    const cookies = req.cookies;
+  
+    // 1. Check required fields
+    if (!email || !password) {
+      return res.status(400).json({ success: false, msg: "Please enter all fields" });
     }
-)
+  
+    // 2. Find the user
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      throw new AppError(404, "User not found in the database!", 404);
+    }
+  
+    // 3. Compare passwords
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
+      throw new AppError(401, "Incorrect password! Please try again.", 401);
+    }
+  
+    // 4. Handle refresh token logic
+    let refreshTokenFromCookie = cookies?.jwt;
+    let newRefreshTokenArray = [];
+  
+    if (refreshTokenFromCookie) {
+      // Check if the refresh token exists in DB
+      const tokenExists = await userModel.findOne({ refreshToken: refreshTokenFromCookie });
+  
+      if (!tokenExists) {
+        // Token is invalid or reused by attacker
+        res.clearCookie("jwt", {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        });
+        return res.status(403).json({ success: false, msg: "Potential refresh token reuse detected!" });
+      }
+  
+      // Remove the old token from user's refreshToken array
+      newRefreshTokenArray = user.refreshToken.filter((token) => token !== refreshTokenFromCookie);
+    }
+  
+    // 5. Generate new tokens (access + refresh)
+    const { accesstoken, refreshtoken } = user.generateAuthToken();
+  
+    // 6. Save new refresh token in DB
+    user.refreshToken = [...newRefreshTokenArray, refreshtoken];
+    await user.save();
+  
+    // 7. Send new refresh token in cookie
+    res.cookie("jwt", refreshtoken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+  
+    // 8. Send access token in response body
+    return res.status(200).json({
+      success: true,
+      msg: "User logged in successfully",
+      accessToken: accesstoken,
+      userId: user._id, // send any extra info you want
+    });
+  });
 
 export const logoutUser = tryCatch(
     async (req, res) => {

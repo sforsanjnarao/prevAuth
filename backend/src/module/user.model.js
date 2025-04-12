@@ -61,8 +61,7 @@ userSchema.methods.generateAuthToken = function () {
       { expiresIn: "1d" }
     );
   
-    const tokens = { accesstoken: accesstoken, refreshtoken: refreshtoken };
-    return tokens;
+    return { accesstoken, refreshtoken };
   };
   
 
