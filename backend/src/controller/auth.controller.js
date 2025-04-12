@@ -81,7 +81,7 @@ export const loginUser = tryCatch(
                 )
             }
             try{
-             let newRefreshTokenArray="";
+             let newRefreshTokenArray=[]; //problem-> 
              let refreshToken=''
 
              // Check if user has an existing refresh token
@@ -89,7 +89,7 @@ export const loginUser = tryCatch(
                 refreshToken=user.refreshToken
              }else{
                 refreshToken=cookies.jwt
-                const foundToken=await userModel.findOne({ refreshToken: refreshToken }).exec();
+                const foundToken=await userModel.findOne({ refreshToken: refreshToken });
 
                 if(!foundToken){
                     console.log('attempted refresh token reuse at login')

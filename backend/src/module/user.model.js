@@ -41,7 +41,12 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    refreshToken: [String]
+    refreshToken: [
+        {
+            type: String,
+            required: true,
+        }
+    ]
 })
 userSchema.methods.generateAuthToken = function () {
     const accesstoken = jwt.sign(
