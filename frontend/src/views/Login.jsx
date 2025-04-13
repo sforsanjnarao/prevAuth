@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, {useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // Assuming use of React Router
 // Using outline icons, but solid might fit the dark theme better sometimes
 import { CameraIcon, CheckIcon, EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import { AppContent } from '../context/AppContext';
+import axios from 'axios';
 
 // Placeholder for your actual API functions
 // import { loginUser, signupUser } from '../api/auth.api';
@@ -9,6 +11,8 @@ import { CameraIcon, CheckIcon, EnvelopeIcon, LockClosedIcon } from '@heroicons/
 // import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
+
+    const {backendUrl ,setIsLoggedIn} = useContext(AppContent);
     const [isLoginView, setIsLoginView] = useState(true); // Start with login view
     const [formData, setFormData] = useState({
         email: '', // Can be used for username too if backend accepts it
@@ -42,6 +46,8 @@ const Login = () => {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
+        axios.defaults.withCredentials=true;
+        await axios.post(`${backendUrl}/api/auth/login`, formData)
         setError('');
         setIsLoading(true);
 
@@ -256,3 +262,5 @@ const Login = () => {
 };
 
 export default Login;
+
+//add the path og reset-pasword in "forgot-password" route in App.js
