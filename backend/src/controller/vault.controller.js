@@ -1,14 +1,14 @@
 // controllers/vault.controller.js
 
-import VaultEntryModel from '../models/VaultEntry.js';
-import userModel from '../models/userModel.js'; // Assuming path to your user model
+import VaultEntryModel from '../module/VaultEntry.js';
+import userModel from '../module/user.model.js'; // Assuming path to your user model
 import { deriveKey, encryptData, decryptData } from '../utils/encryption.js'; // Import encryption utils
 import { tryCatch } from '../utils/tryCatch.js'; // Your tryCatch wrapper
 import AppError from '../utils/AppError.js'; // Your custom error class
 
 // --- Add New Vault Entry ---
 export const addVaultEntry = tryCatch(async (req, res) => {
-    const userId = req.user.id; // From verifyJWT middleware
+    const userId = req.user._id; // From verifyJWT middleware
     const {
         appName,
         username,
@@ -70,7 +70,7 @@ export const addVaultEntry = tryCatch(async (req, res) => {
 
 // --- Get All Vault Entries (Metadata Only) ---
 export const getAllVaultEntries = tryCatch(async (req, res) => {
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     // Fetch entries for the user, selecting ONLY non-sensitive fields
     const entries = await VaultEntryModel.find({ userId: userId })
@@ -83,7 +83,7 @@ export const getAllVaultEntries = tryCatch(async (req, res) => {
 
 // --- Get Decrypted Data for a Specific Entry Field ---
 export const getDecryptedVaultData = tryCatch(async (req, res) => {
-    const userId = req.user.id;
+    const userId = req.user._id;
     const entryId = req.params.id;
     const { masterPassword, field } = req.body; // field = 'password' or 'notes'
 
@@ -156,7 +156,7 @@ export const getDecryptedVaultData = tryCatch(async (req, res) => {
 
 // --- Update Vault Entry ---
 export const updateVaultEntry = tryCatch(async (req, res) => {
-    const userId = req.user.id;
+    const userId = req.user._id;
     const entryId = req.params.id;
     const {
         appName, username, url, category, // Metadata fields
@@ -245,7 +245,7 @@ export const updateVaultEntry = tryCatch(async (req, res) => {
 
 // --- Delete Vault Entry ---
 export const deleteVaultEntry = tryCatch(async (req, res) => {
-    const userId = req.user.id;
+    const userId = req.user._id;
     const entryId = req.params.id;
 
      if (!entryId) {
