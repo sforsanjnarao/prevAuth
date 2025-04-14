@@ -30,12 +30,18 @@ export const registerUser = async (req, res) => {
         try {
             const { accessToken, refreshToken, userId } = await RegisterUser(name, email, password);
 
-        res.cookie('jwt', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-            maxAge: 24 * 60 * 60 * 1000 // 1 day
-        });
+            res.cookie('access_token', accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+                maxAge: 15 * 60 * 1000, // 15 min
+              });
+            res.cookie('jwt', refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+                maxAge: 24 * 60 * 60 * 1000 // 1 day
+            });
 
         const mailOptions = {
             from: process.env.SENDER_EMAIL,
@@ -49,7 +55,8 @@ export const registerUser = async (req, res) => {
         return res.status(201).json({
             success: true,
             msg: 'User registered successfully',
-            accessToken,
+            accessToken: accessToken,
+            refreshToken: refreshToken,
             userId
         });
     } catch (error) {
@@ -107,6 +114,12 @@ export const loginUser = tryCatch(async (req, res) => {
     // 6. Save new refresh token in DB
     user.refreshToken = [...newRefreshTokenArray, refreshtoken];
     await user.save();
+    res.cookie('access_token', accesstoken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        maxAge: 15 * 60 * 1000, // 15 min
+      });
   
     // 7. Send new refresh token in cookie
     res.cookie("jwt", refreshtoken, {
@@ -121,6 +134,7 @@ export const loginUser = tryCatch(async (req, res) => {
       success: true,
       msg: "User logged in successfully",
       accessToken: accesstoken,
+      refreshToken: refreshtoken,
       userId: user._id, // send any extra info you want
     });
   });
@@ -135,6 +149,13 @@ export const logoutUser = tryCatch(
             const foundUser=await userModel.findOne({ refreshToken: refreshToken });
 
             if(!foundUser){
+                res.clearCookie('access_token', {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production', // Ensure secure cookies in production
+                    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+                });
+
+
                 res.clearCookie('jwt',{
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
@@ -146,7 +167,14 @@ export const logoutUser = tryCatch(
             //delete refresh token from db
             foundUser.refreshToken=foundUser.refreshToken.filter(token=>token!==refreshToken);
             await foundUser.save();
-            res.clearCookie('token',{
+
+            res.clearCookie('access_token', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+            });
+
+            res.clearCookie('jwt',{
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: process.env.NODE_ENV === 'production'? 'none':'strict',
@@ -321,8 +349,8 @@ export const refreshToken=tryCatch(async (req, res) => {
                 foundUser.refreshToken=[...newRefreshTokenArray];
                 const result=await foundUser.save();
             }
-            if(err||foundUser._id.toString()!==decode.id){
-                return res.status(403).json({msg: 'Token is not valid, authorization denied' });
+            if(err||foundUser._id.toString()!==decode._id){
+                return res.status(403).json({msg: 'Token is not valid111111111, authorization denied' });
             }
             //refreshToken still valid
             const accessToken=jwt.sign(
