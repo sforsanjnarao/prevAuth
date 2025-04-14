@@ -6,6 +6,19 @@ import EmailVerify from './views/EmailVerify'
 import ResetPassword from './views/ResetPassword'
 
 function App() {
+  const { login } = useAuth();
+
+  useEffect(() => {
+    const refreshAccessToken = async () => {
+      try {
+        const res = await api.get('/auth/refresh');
+        login(res.data.accessToken);
+      } catch (err) {
+        console.log("Session expired or user not logged in");
+      }
+    };
+    refreshAccessToken();
+  }, []);
   return (
     <div>
 <Routes>

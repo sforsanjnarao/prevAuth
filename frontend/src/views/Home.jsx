@@ -14,3 +14,8 @@ function Home() {
 }
 
 export default Home
+
+// const handleLogout = async () => {
+//   await api.post('/auth/logout');
+//   logout(); // from AuthContext
+// };

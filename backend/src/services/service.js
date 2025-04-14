@@ -35,7 +35,7 @@ const LoginUser = async (user, newRefreshTokenArray) => {
   return {
     accessToken: accesstoken,
     refreshToken: refreshtoken,
-    userId: newUser._id
+    userId: user._id
 };
 };
 
