@@ -68,7 +68,7 @@ export const loginUser = tryCatch(async (req, res) => {
     }
   
     // 2. Find the user
-    const user = await userModel.findOne({ email });
+    const user = await userModel.findOne({ email }).select('+password');
     if (!user) {
       throw new AppError(404, "User not found in the database!", 404);
     }

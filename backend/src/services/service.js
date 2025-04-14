@@ -1,14 +1,17 @@
 import bcrypt from "bcryptjs";
 import userModel from "../module/user.model.js";
 import jwt from "jsonwebtoken";
+import crypto from 'crypto';
 import mongoose from "mongoose";
 
 //Upon successful authentication, it calls a service function to generate new access and refresh tokens and retrieves the user’s profile picture.
 const RegisterUser = async (name, email, password) => {
+  const encryptionSalt = crypto.randomBytes(16).toString('base64'); // Generate 16 bytes salt -> Base64
   const newUser = new userModel({
       name,
       email,
-      password
+      password,
+      encryptionSalt
   });
 
   const salt = await bcrypt.genSalt(10);

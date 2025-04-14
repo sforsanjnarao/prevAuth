@@ -83,8 +83,9 @@ export const getAllVaultEntries = tryCatch(async (req, res) => {
 
 // --- Get Decrypted Data for a Specific Entry Field ---
 export const getDecryptedVaultData = tryCatch(async (req, res) => {
-    const userId = req.user._id;
-    const entryId = req.params.id;
+    const userId = req.user._id; //khud sa nikal raha h database sa
+    const entryId = req.params.id; //we are passing this in the route
+    // console.log(req.body)
     const { masterPassword, field } = req.body; // field = 'password' or 'notes'
 
     // --- Validation ---
@@ -109,6 +110,8 @@ export const getDecryptedVaultData = tryCatch(async (req, res) => {
     if (!entry) {
         throw new AppError(404, 'Vault entry not found.', 404);
     }
+    console.log('Entry userId:', entry.userId.toString());
+    console.log('Current userId:', userId);
     // !!! Authorization Check !!!
     if (entry.userId.toString() !== userId) {
         throw new AppError(403, 'You are not authorized to access this vault entry.', 403);
