@@ -85,6 +85,7 @@ export const getAllVaultEntries = tryCatch(async (req, res) => {
 export const getDecryptedVaultData = tryCatch(async (req, res) => {
     const userId = req.user._id; //khud sa nikal raha h database sa
     const entryId = req.params.id; //we are passing this in the route
+     
     // console.log(req.body)
     const { masterPassword, field } = req.body; // field = 'password' or 'notes'
 
@@ -101,19 +102,21 @@ export const getDecryptedVaultData = tryCatch(async (req, res) => {
         userModel.findById(userId).select('+encryptionSalt').lean(), // Lean for performance if not saving
         // Fetch entry including the necessary encrypted fields/IVs/tags
         VaultEntryModel.findById(entryId).select('+encryptedPassword +passwordIv +passwordAuthTag +encryptedNotes +notesIv +notesAuthTag +userId')
+        
     ]);
 
     // --- Checks ---
     if (!user || !user.encryptionSalt) {
         throw new AppError(404, 'User or encryption salt not found.', 404);
     }
+    console.log(entry)
     if (!entry) {
         throw new AppError(404, 'Vault entry not found.', 404);
     }
     console.log('Entry userId:', entry.userId.toString());
     console.log('Current userId:', userId);
     // !!! Authorization Check !!!
-    if (entry.userId.toString() !== userId) {
+    if (entry.userId.toString() !== userId.toString()) {
         throw new AppError(403, 'You are not authorized to access this vault entry.', 403);
     }
     if (field === 'notes' && !entry.encryptedNotes) {

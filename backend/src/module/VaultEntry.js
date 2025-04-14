@@ -48,7 +48,7 @@ const VaultEntrySchema = new Schema({
         type: String // Store Base64 encoded IV for notes (required if notes exist)
     },
     // --- Auth Tag for Notes Encryption ---
-     notesAuthTag: {
+    notesAuthTag: {
          type: String // Store Base64 encoded Auth Tag for notes (required if notes exist)
      },
     category: { // User-defined category for organization
