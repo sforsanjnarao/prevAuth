@@ -12,7 +12,7 @@ const authSlice = createSlice({
         setAuth(state, action) {
             state.userId=action.payload.userId;
             state.accessToken=action.payload.accessToken;
-            state.isAuthenticated=true
+            state.isAuthenticated=false
         },
         clearAuth(state) {
             state.userId=null;

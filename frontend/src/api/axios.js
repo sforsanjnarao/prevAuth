@@ -10,13 +10,13 @@ const BASE_URL = "http://localhost:3000/api";
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
   withCredentials: true, // send cookies
-  headers: {
-    "Content-Type": "application/json",
-  },
+  // headers: {
+  //   "Content-Type": "application/json",
+  // },
 });
 
 // ⛑️ Auto-refresh access token if expired
-axiosInstance.interceptors.response.use(
+axiosInstance.interceptors.response.use(  //Axios interceptor that handles all failed responses globally.
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
@@ -24,11 +24,12 @@ axiosInstance.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url.includes("/auth/refresh_token")
+      !originalRequest.url.includes("/auth/refresh-token")
     ) {
       originalRequest._retry = true;
       try {
         const res = await refreshAccessToken();
+        console.log(res)
         store.dispatch(setAuth({ userId: res.userId }));
         return axiosInstance(originalRequest);
       } catch (refreshError) {

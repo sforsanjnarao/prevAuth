@@ -3,7 +3,7 @@ import axiosInstance from "./axios";
 
 // Register
 export const registerUser = async (name, email, password) => {
-  const res = await axiosInstance.post("/auth/register", { name, email, password });
+  const res = await axiosInstance.post("/auth/register", { name, email, password },{ withCredentials: true });
   return res.data;
 };
 
@@ -21,7 +21,9 @@ export const logoutUser = async () => {
 
 // Refresh Token
 export const refreshAccessToken = async () => {
-  const res = await axiosInstance.post("/auth/refresh");
+  const res = await axiosInstance.post("/auth/refresh-token",{
+    withCredentials: true,
+  });
   return res.data;
 };
 

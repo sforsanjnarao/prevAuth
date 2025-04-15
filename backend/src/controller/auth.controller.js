@@ -55,8 +55,6 @@ export const registerUser = async (req, res) => {
         return res.status(201).json({
             success: true,
             msg: 'User registered successfully',
-            accessToken: accessToken,
-            refreshToken: refreshToken,
             userId
         });
     } catch (error) {

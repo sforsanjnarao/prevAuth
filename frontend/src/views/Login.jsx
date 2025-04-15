@@ -4,8 +4,10 @@ import { loginUser } from "../api/authApi";
 import { setAuth, setLoading } from "../features/authSlice";
 import { toast } from "react-toastify";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
+  const navigate = useNavigate()
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const dispatch = useDispatch();
@@ -15,10 +17,11 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     dispatch(setLoading(true));
-
     try {
       const res = await loginUser(email, password);
-      dispatch(setAuth({ userId: res.userId}));
+      console.log(res)
+      dispatch(setAuth({ userId: res.userId, isAuthenticated: true }));
+      navigate("/dashboard")
         toast.success("Login successful");
     } catch (err) {
         console.error("Login failed:", err.response?.data?.message || err.message);

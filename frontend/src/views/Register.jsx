@@ -19,7 +19,11 @@ const Register = () => {
     dispatch(setLoading(true));
     try {
       const res = await registerUser(formData.name, formData.email, formData.password);
-      dispatch(setAuth({ userId: res.data.userId }));
+      console.log(res)
+      console.log(dispatch(setAuth({ userId: res.userId })));
+     
+      dispatch(setAuth({ userId: res.userId }));
+      
       toast.success("Registration successful");
     } catch (err) {
         console.error("register failed:", err.response?.data?.message || err.message);
