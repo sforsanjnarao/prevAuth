@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { getDecryptedVaultData, deleteVaultEntry } from '../services/vaultApi'; // Import API functions
 import { EyeIcon, EyeSlashIcon, PencilSquareIcon, TrashIcon, LinkIcon, ClipboardDocumentIcon } from '@heroicons/react/24/outline'; // Example icons
 import { toast } from 'react-toastify'; 
+import ConfirmModal from './common/ConfirmModal'
+import PasswordPromptModal from './common/PasswordPromptModal';
 
 // Simple reusable Button component (optional, can inline styles)
 const ActionButton = ({ onClick, children, className = '', disabled = false, title = '' }) => (
@@ -23,41 +25,45 @@ function VaultItem({ entry, onEdit, onDeleteSuccess }) {
     const [decryptedPassword, setDecryptedPassword] = useState('');
     const [isDecrypting, setIsDecrypting] = useState(false);
     const [decryptionError, setDecryptionError] = useState(null);
+    const [showConfirmDelete, setShowConfirmDelete] = useState(false); // <--- State for confirm modal
+    const [isDeleting, setIsDeleting] = useState(false); 
+    const [showPasswordPrompt, setShowPasswordPrompt] = useState(false); 
 
     // State for copy feedback
     const [copiedField, setCopiedField] = useState(null); // 'username' or 'password'
 
     // --- Password Handling ---
-    const handleTogglePassword = async () => {
+    const handleShowPasswordRequest = () => {
         if (isPasswordVisible) {
+            // If already visible, just hide it
             setIsPasswordVisible(false);
             setDecryptedPassword('');
             setDecryptionError(null);
-            return;
+        } else {
+            // Open the prompt modal
+            setShowPasswordPrompt(true);
         }
+    };
 
-        // Replace window.prompt with a secure modal later
-        const masterPassword = window.prompt(
-            `Enter Master Password to view password for "${entry.appName}":`
-        );
-        if (!masterPassword) return; // User cancelled
-
-        setIsDecrypting(true);
+    const handlePasswordSubmit = async (masterPassword) => {
+        // Called by PasswordPromptModal when user submits password
+        setShowPasswordPrompt(false); // Close prompt modal immediately
+        setIsDecrypting(true); // Set loading state for UI feedback (e.g., button)
         setDecryptionError(null);
+
         try {
             const response = await getDecryptedVaultData(entry._id, masterPassword, 'password');
             if (response.success) {
                 setDecryptedPassword(response.decryptedData);
                 setIsPasswordVisible(true);
             } else {
-                // Should be caught by the catch block, but handle just in case
-                throw new Error(response.msg || 'Decryption failed');
+                 throw new Error(response.msg || 'Decryption failed');
             }
         } catch (error) {
             console.error('Decryption error:', error);
             const errorMsg = error.message || 'Failed to decrypt. Incorrect Master Password?';
-            toast.error(errorMsg); 
-            setDecryptionError(errorMsg);
+            toast.error(errorMsg);
+            setDecryptionError(errorMsg); // Keep inline error if desired
             setIsPasswordVisible(false);
             setDecryptedPassword('');
         } finally {
@@ -65,21 +71,31 @@ function VaultItem({ entry, onEdit, onDeleteSuccess }) {
         }
     };
 
+
     // --- Delete Handling ---
-    const handleDeleteClick = async () => {
-        if (window.confirm(`Are you sure you want to delete the entry for "${entry.appName}"?`)) {
-            try {
-                await deleteVaultEntry(entry._id);
-                toast.success(`Entry "${entry.appName}" deleted successfully!`); //
-                onDeleteSuccess(entry._id); // Notify parent to remove from list
-                // Optionally show a success toast message here
-            } catch (error) {
-                console.error('Delete error:', error);
-                // Show an error toast message here
-                toast.error(error.message || `Failed to delete entry "${entry.appName}".`); // Simple alert for now
-            }
+    const handleDeleteRequest = () => {
+        // Just open the confirmation modal
+        setShowConfirmDelete(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        // Actual delete logic triggered by the modal's confirm button
+        setIsDeleting(true); // Show loading state on confirm button
+        try {
+            await deleteVaultEntry(entry._id);
+            toast.success(`Entry "${entry.appName}" deleted successfully!`);
+            setShowConfirmDelete(false); // Close modal on success
+            onDeleteSuccess(entry._id); // Notify parent AFTER success
+        } catch (error) {
+            console.error('Delete error:', error);
+            toast.error(error.message || `Failed to delete entry "${entry.appName}".`);
+            // Optionally close modal on error too, or leave it open
+            // setShowConfirmDelete(false);
+        } finally {
+            setIsDeleting(false); // Reset loading state
         }
     };
+
 
     // --- Copy to Clipboard ---
     const copyToClipboard = (text, fieldName) => {
@@ -113,7 +129,7 @@ function VaultItem({ entry, onEdit, onDeleteSuccess }) {
                     <ActionButton onClick={onEdit} title="Edit Entry" className="text-yellow-600 hover:text-yellow-800">
                         <PencilSquareIcon className="h-5 w-5" />
                     </ActionButton>
-                    <ActionButton onClick={handleDeleteClick} title="Delete Entry" className="text-red-500 hover:text-red-700">
+                    <ActionButton onClick={handleDeleteRequest} title="Delete Entry" className="text-red-500 hover:text-red-700">
                         <TrashIcon className="h-5 w-5" />
                     </ActionButton>
                 </div>
@@ -144,7 +160,7 @@ function VaultItem({ entry, onEdit, onDeleteSuccess }) {
                             {isPasswordVisible ? decryptedPassword : '••••••••••'}
                         </span>
                         <ActionButton
-                            onClick={handleTogglePassword}
+                            onClick={handleShowPasswordRequest}
                             disabled={isDecrypting}
                             title={isPasswordVisible ? 'Hide Password' : 'Show Password'}
                         >
@@ -171,13 +187,32 @@ function VaultItem({ entry, onEdit, onDeleteSuccess }) {
                      </div>
                 </div>
                  {decryptionError && <p className="text-xs text-red-500 mt-1">{decryptionError}</p>}
-            </div>
 
-            {/* Footer Section (Optional: Timestamps, Category) */}
              {entry.category && <p className="text-xs text-gray-400 mt-2">Category: {entry.category}</p>}
              <p className="text-xs text-gray-400 mt-1 text-right">
                 Last Updated: {new Date(entry.updatedAt).toLocaleDateString()}
             </p>
+            </div>
+            <ConfirmModal
+                isOpen={showConfirmDelete}
+                onClose={() => setShowConfirmDelete(false)} // Allow closing modal
+                onConfirm={handleConfirmDelete}            // Call actual delete logic
+                title="Confirm Deletion"
+                message={`Are you sure you want to delete the vault entry for "${entry.appName}"? This action cannot be undone.`}
+                confirmText="Delete"
+                isConfirming={isDeleting} // Pass loading state
+            />
+            <PasswordPromptModal
+                isOpen={showPasswordPrompt}
+                onClose={() => setShowPasswordPrompt(false)}
+                onSubmit={handlePasswordSubmit} // Pass the handler
+                title={`View Password for "${entry.appName}"`}
+                message="Enter your Master Password to view the stored password."
+                submitText="View Password"
+                isSubmitting={isDecrypting} // Use decrypting state for loading
+            />
+
+            {/* Footer Section (Optional: Timestamps, Category) */}
 
         </div>
     );
