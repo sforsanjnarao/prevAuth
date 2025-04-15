@@ -7,7 +7,7 @@ const PrivateRoute = ({children}) => {
   
     const isLoggedIn = isAuthenticated && userId;
   
-    return isLoggedIn ? {children}: <Navigate to="/login" />;
+    return isLoggedIn ? children: <Navigate to="/login" />;
   };
 
 export default PrivateRoute;
