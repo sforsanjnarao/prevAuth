@@ -9,13 +9,14 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const dispatch = useDispatch();
+  const loading = useSelector((state) => state.auth.loading);
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
     dispatch(setLoading(true));
 
     try {
-        const loading = useSelector((state) => state.auth.loading);
       const res = await loginUser(email, password);
       dispatch(setAuth({ userId: res.userId}));
         toast.success("Login successful");

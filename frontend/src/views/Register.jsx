@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch,useSelector } from "react-redux";
 import { registerUser } from "../api/authApi";
 import { toast } from "react-toastify";
 import { setAuth, setLoading } from "../features/authSlice";
@@ -7,6 +7,8 @@ import { setAuth, setLoading } from "../features/authSlice";
 const Register = () => {
   const dispatch = useDispatch();
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
+  const loading = useSelector((state) => state.auth.loading);
+
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));

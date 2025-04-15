@@ -1,16 +1,16 @@
-// src/api/privateAxios.js
-import axios from "axios";
+// // src/api/privateAxios.js
+// import axios from "axios";
 
-const usePrivateAxios = (accessToken) => {
-  const privateAxios = axios.create({
-    baseURL: axios.defaults.baseURL,
-    withCredentials: true,
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+// const usePrivateAxios = (accessToken) => {
+//   const privateAxios = axios.create({
+//     baseURL: axios.defaults.baseURL,
+//     withCredentials: true,
+//     // headers: {
+//     //   Authorization: `Bearer ${accessToken}`,
+//     // },
+//   });
 
-  return privateAxios;
-};
+//   return privateAxios;
+// };
 
-export default usePrivateAxios;
+// // export default usePrivateAxios;

@@ -1,7 +1,7 @@
 // src/api/axios.js
 import axios from "axios";
 import { refreshAccessToken } from "./authApi";
-import store from "../store/store";
+import {store} from "../store";
 import { setAuth, clearAuth } from "../features/authSlice";
 import { toast } from "react-toastify";
 
@@ -24,7 +24,7 @@ axiosInstance.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url.includes("/auth/refresh")
+      !originalRequest.url.includes("/auth/refresh_token")
     ) {
       originalRequest._retry = true;
       try {

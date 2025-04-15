@@ -24,3 +24,9 @@ export const refreshAccessToken = async () => {
   const res = await axiosInstance.post("/auth/refresh");
   return res.data;
 };
+
+// get User Profile
+export const getProfile = async () => {
+    const res = await axiosInstance.get("/auth/me");
+    return res.data;
+  };

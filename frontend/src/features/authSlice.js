@@ -8,7 +8,7 @@ const initialState = {
 const authSlice = createSlice({
     name: "auth",
     initialState,
-    reducer:{
+    reducers:{
         setAuth(state, action) {
             state.userId=action.payload.userId;
             state.accessToken=action.payload.accessToken;
