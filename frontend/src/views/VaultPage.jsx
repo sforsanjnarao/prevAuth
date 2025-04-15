@@ -4,7 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { fetchVaultEntries } from '../services/vaultApi';
 // Import child components later:
 import VaultItem from '../components/VaultItem';
-// import VaultFormModal from '../components/VaultFormModal';
+import VaultFormModal from '../components/VaultFormModal';
+import { toast } from 'react-toastify'; 
 
 function VaultPage() {
     const [entries, setEntries] = useState([]);
@@ -26,17 +27,11 @@ function VaultPage() {
                  throw new Error(response.msg || 'Failed to fetch entries');
             }
         } catch (err) {
-            // Handle potential 'Not authenticated' error from vaultApi if token missing
-            if (err.message === 'Not authenticated') {
-                // Optional: Redirect to login or show specific message
-                setError('Authentication required. Please log in.');
-                // Example redirect (needs useNavigate hook from react-router-dom)
-                // navigate('/login');
-            } else {
-                 setError(err.message || 'An unexpected error occurred while fetching entries.');
-            }
+            const errorMsg = err.message || 'An unexpected error occurred while fetching entries.';
+            setError(errorMsg); // Keep error state for potential inline display
+            toast.error(`Failed to load vault: ${errorMsg}`); // <--- Error Toast for fetch failure
             setEntries([]);
-        } finally {
+        }  finally {
             setIsLoading(false);
         }
     }, []);
@@ -130,21 +125,11 @@ function VaultPage() {
 
             {/* Modal Placeholder (Same as before) */}
             {showModal && (
-                 <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex justify-center items-center z-50">
-                    <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-                        <h2 className="text-xl font-bold mb-4">{entryToEdit ? 'Edit Entry' : 'Add New Entry'}</h2>
-                        <p className="mb-4">Modal Content Placeholder...</p>
-                        {/* <VaultFormModal
-                            entryToEdit={entryToEdit}
-                            onClose={handleCloseModal}
-                            onSaveSuccess={handleSaveSuccess}
-                        /> */}
-                        <div className="flex justify-end space-x-2 mt-4">
-                            <button onClick={handleCloseModal} className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Cancel</button>
-                            {/* <button onClick={handleSaveSuccess} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Save (Test)</button> */}
-                        </div>
-                    </div>
-                 </div>
+                <VaultFormModal
+                    entryToEdit={entryToEdit}
+                    onClose={handleCloseModal}
+                    onSaveSuccess={handleSaveSuccess}
+                />
             )}
         </div>
     );

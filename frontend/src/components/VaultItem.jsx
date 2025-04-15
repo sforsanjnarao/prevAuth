@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { getDecryptedVaultData, deleteVaultEntry } from '../services/vaultApi'; // Import API functions
 import { EyeIcon, EyeSlashIcon, PencilSquareIcon, TrashIcon, LinkIcon, ClipboardDocumentIcon } from '@heroicons/react/24/outline'; // Example icons
+import { toast } from 'react-toastify'; 
 
 // Simple reusable Button component (optional, can inline styles)
 const ActionButton = ({ onClick, children, className = '', disabled = false, title = '' }) => (
@@ -54,7 +55,9 @@ function VaultItem({ entry, onEdit, onDeleteSuccess }) {
             }
         } catch (error) {
             console.error('Decryption error:', error);
-            setDecryptionError(error.message || 'Failed to decrypt. Incorrect Master Password?');
+            const errorMsg = error.message || 'Failed to decrypt. Incorrect Master Password?';
+            toast.error(errorMsg); 
+            setDecryptionError(errorMsg);
             setIsPasswordVisible(false);
             setDecryptedPassword('');
         } finally {
@@ -67,12 +70,13 @@ function VaultItem({ entry, onEdit, onDeleteSuccess }) {
         if (window.confirm(`Are you sure you want to delete the entry for "${entry.appName}"?`)) {
             try {
                 await deleteVaultEntry(entry._id);
+                toast.success(`Entry "${entry.appName}" deleted successfully!`); //
                 onDeleteSuccess(entry._id); // Notify parent to remove from list
                 // Optionally show a success toast message here
             } catch (error) {
                 console.error('Delete error:', error);
                 // Show an error toast message here
-                window.alert(`Failed to delete entry: ${error.message}`); // Simple alert for now
+                toast.error(error.message || `Failed to delete entry "${entry.appName}".`); // Simple alert for now
             }
         }
     };
@@ -82,11 +86,12 @@ function VaultItem({ entry, onEdit, onDeleteSuccess }) {
         navigator.clipboard.writeText(text)
             .then(() => {
                 setCopiedField(fieldName);
+                toast.info(`${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} copied to clipboard!`, { autoClose: 1500 }); 
                 setTimeout(() => setCopiedField(null), 1500); // Hide feedback after 1.5s
             })
             .catch(err => {
                 console.error('Failed to copy:', err);
-                window.alert('Failed to copy text.'); // Fallback message
+                toast.error('Failed to copy text.'); // Fallback message
             });
     };
 

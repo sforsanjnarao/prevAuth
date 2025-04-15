@@ -26,6 +26,19 @@ function App() {
   // }, []);
   return (
     <div>
+        <ToastContainer
+            position="top-right"  
+            autoClose={3000} 
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="dark" // Or 'dark', 'colored'
+      />
+
         
         <Routes>
           <Route path="/" element={<Home />} />
@@ -37,7 +50,6 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
           </Route>
         </Routes>
-        <ToastContainer position="top-center" />
 
        
     </div>
