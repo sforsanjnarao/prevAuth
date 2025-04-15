@@ -1,6 +1,6 @@
 // src/components/VaultItem.jsx
 import React, { useState } from 'react';
-import { getDecryptedVaultData, deleteVaultEntry } from '../services/vaultApi'; // Import API functions
+import { getDecryptedVaultData, deleteVaultEntry } from '../api/vaultApi'; // Import API functions
 import { EyeIcon, EyeSlashIcon, PencilSquareIcon, TrashIcon, LinkIcon, ClipboardDocumentIcon } from '@heroicons/react/24/outline'; // Example icons
 import { toast } from 'react-toastify'; 
 import ConfirmModal from './common/ConfirmModal'

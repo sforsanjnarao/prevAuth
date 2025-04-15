@@ -1,7 +1,7 @@
 // src/pages/VaultPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 // Import the NEW vaultApi service
-import { fetchVaultEntries } from '../services/vaultApi';
+import { fetchVaultEntries } from '../api/vaultApi';
 // Import child components later:
 import VaultItem from '../components/VaultItem';
 import VaultFormModal from '../components/VaultFormModal';

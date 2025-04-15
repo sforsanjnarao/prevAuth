@@ -55,3 +55,5 @@ function Modal({isOpen, onClose, title, children ,widthClass='max-w-md' }) {
     );
 
 }
+
+export default Modal;

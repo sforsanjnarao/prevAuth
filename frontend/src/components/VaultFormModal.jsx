@@ -1,8 +1,9 @@
 // src/components/VaultFormModal.jsx
 import React, { useState, useEffect } from 'react';
-import { addVaultEntry, updateVaultEntry } from '../services/vaultApi'; // Import API functions
+import { addVaultEntry, updateVaultEntry } from '../api/vaultApi'; // Import API functions
 import { XMarkIcon } from '@heroicons/react/24/solid'; // Icon for close button
-import { toast } from 'react-toastify'; 
+import { toast } from 'react-toastify';
+import PasswordPromptModal from './common/PasswordPromptModal';  
 
 // Simple Input Component (Optional - Can inline styles)
 const InputField = ({ label, id, type = 'text', value, onChange, placeholder = '', required = false, autoComplete = "off", ...props }) => (
@@ -59,6 +60,8 @@ function VaultFormModal({ entryToEdit, onClose, onSaveSuccess }) {
     const [formData, setFormData] = useState(initialFormData);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
+    const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+    const [payloadToSubmit, setPayloadToSubmit] = useState(null); 
 
     // Effect to populate form when editing
     useEffect(() => {
@@ -89,78 +92,84 @@ function VaultFormModal({ entryToEdit, onClose, onSaveSuccess }) {
         setError(null); // Clear error on new input
     };
 
-    const handleSubmit = async (e) => {
+    const handleFormSubmitRequest = async (e) => {
         e.preventDefault();
-        setError(null); // Clear previous errors
+        setError(null);
+        // ... (Basic Client-Side Validation - use toast or setError) ...
+         if (!formData.appName || !formData.username) {
+             toast.warn("Application name and username are required."); return;
+         }
+         if (!isEditing && !formData.vaultPassword) {
+              toast.warn("Password is required for new entries."); return;
+         }
 
-        // --- Basic Client-Side Validation ---
-        if (!formData.appName || !formData.username) {
-            toast.warn("Application name and username are required.");
-            return;
-        }
-        // Require password only for new entries or if user explicitly types one for edit
-        if (!isEditing && !formData.vaultPassword) {
-            toast.warn("Password is required for new entries.");
-             return;
-        }
-         // If editing, password/notes are optional unless provided
         const requiresMasterPassword = !isEditing || formData.vaultPassword || formData.vaultNotes;
 
-
-        // --- Get Master Password ---
-        let masterPassword = '';
-        if (requiresMasterPassword) {
-             // Replace with a secure modal input later!
-             masterPassword = window.prompt(
-                 `Enter Master Password to ${isEditing ? 'update' : 'save'} entry for "${formData.appName}":`
-             );
-             if (!masterPassword) {
-                toast.error("Master Password is required to save sensitive data.");
-                 return; // User cancelled or entered nothing
-             }
-        }
-
-
-        setIsSubmitting(true);
-
-        // --- Prepare Payload for API ---
-        const payload = {
+        // Prepare payload *before* asking for password
+        const preparedPayload = {
             appName: formData.appName,
             username: formData.username,
             url: formData.url || '',
             category: formData.category || '',
-            // Include sensitive data ONLY if provided OR if required (new entry)
-            ...(requiresMasterPassword && { masterPassword: masterPassword }), // Conditionally add masterPassword
+             // Include vaultPassword/vaultNotes ONLY if they have values
+             // The masterPassword will be added later if needed
             ...(formData.vaultPassword && { vaultPassword: formData.vaultPassword }),
-             // Send vaultNotes only if provided. Allow empty string to clear existing notes during update.
-            ...(formData.vaultNotes !== undefined && isEditing ? { vaultNotes: formData.vaultNotes } : {}), // Send if editing & defined
-            ...(!isEditing && formData.vaultNotes ? { vaultNotes: formData.vaultNotes } : {}) // Send if adding & defined & not empty
+            ...(formData.vaultNotes !== undefined && isEditing ? { vaultNotes: formData.vaultNotes } : {}),
+            ...(!isEditing && formData.vaultNotes ? { vaultNotes: formData.vaultNotes } : {})
         };
 
+        setPayloadToSubmit(preparedPayload); // Store the payload
 
-        try {
-            let successMsg='';
+        if (requiresMasterPassword) {
+            // Open the password prompt instead of calling API directly
+            setShowPasswordPrompt(true);
+        } else {
+            // If no master password needed (e.g., editing only metadata), submit directly
+            await submitData(preparedPayload);
+        }
+    };
+
+    const handlePasswordSubmit = async (masterPassword) => {
+        // Called by PasswordPromptModal onSubmit
+        setShowPasswordPrompt(false); // Close prompt
+        if (!payloadToSubmit) return; // Should not happen
+
+        // Add masterPassword to the stored payload
+        const finalPayload = {
+            ...payloadToSubmit,
+            masterPassword: masterPassword,
+        };
+        await submitData(finalPayload); // Call the actual API submission logic
+    };
+
+    const submitData = async (payload) => {
+        setIsSubmitting(true);
+        setError(null);
+         try {
+            let successMsg = '';
             if (isEditing) {
                 await updateVaultEntry(entryToEdit._id, payload);
                 successMsg = `Entry "${payload.appName}" updated successfully!`;
-
             } else {
                 await addVaultEntry(payload);
                 successMsg = `Entry "${payload.appName}" added successfully!`;
             }
-            toast.success(successMsg); 
-            onSaveSuccess(); // Call parent's success handler (closes modal, reloads list)
+            toast.success(successMsg);
+            onSaveSuccess();
 
         } catch (apiError) {
             console.error("Save/Update Error:", apiError);
-            toast.error(apiError.message || `Failed to ${isEditing ? 'update' : 'save'} entry.`); 
+            toast.error(apiError.message || `Failed to ${isEditing ? 'update' : 'save'} entry.`);
+            // Optionally set inline error: setError(apiError.message);
         } finally {
             setIsSubmitting(false);
-             // Clear masterPassword from payload maybe? Not strictly necessary as it's scoped
+            setPayloadToSubmit(null); // Clear temporary payload
         }
     };
 
+
     return (
+        <>
         // Modal backdrop and positioning
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
             {/* Modal Content */}
@@ -180,7 +189,7 @@ function VaultFormModal({ entryToEdit, onClose, onSaveSuccess }) {
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleFormSubmitRequest} className="space-y-4">
                     {error && (
                         <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded text-sm" role="alert">
                             {error}
@@ -276,6 +285,21 @@ function VaultFormModal({ entryToEdit, onClose, onSaveSuccess }) {
                 .animate-fade-in-scale { animation: fade-in-scale 0.2s ease-out forwards; }
             `}</style>
         </div>
+        {/* --- Render Password Prompt Modal --- */}
+        <PasswordPromptModal
+                 isOpen={showPasswordPrompt}
+                 onClose={() => {
+                     setShowPasswordPrompt(false);
+                     setPayloadToSubmit(null); // Clear payload if user cancels password prompt
+                 }}
+                 onSubmit={handlePasswordSubmit}
+                 title={`Confirm ${isEditing ? 'Update' : 'Save'}`}
+                 message={`Enter your Master Password to ${isEditing ? 'update' : 'save'} the entry for "${payloadToSubmit?.appName || ''}".`}
+                 submitText={isEditing ? 'Update Entry' : 'Add Entry'}
+                 isSubmitting={isSubmitting} // Show loading state if main form is submitting
+             />
+
+        </>
     );
 }
 

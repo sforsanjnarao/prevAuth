@@ -9,6 +9,7 @@ import Dashboard from './views/Dashboard'
 import PrivateRoute from './components/PrivateRoutes'
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import VaultPage from './views/VaultPage'
 
 function App() {
   // const { login } = useAuth();
@@ -49,6 +50,7 @@ function App() {
           <Route element={<PrivateRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
           </Route>
+          <Route path='/vault' element={<VaultPage/>}/>
         </Routes>
 
        
