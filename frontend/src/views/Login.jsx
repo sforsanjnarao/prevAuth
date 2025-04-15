@@ -1,27 +1,41 @@
-// /pages/LoginPage.jsx
-import { useState } from 'react';
-import api from '../api/axios';
-import { useAuth } from '../auth/AuthContext';
+// src/pages/Login.jsx
+import { useDispatch,useSelector } from "react-redux";
+import { loginUser } from "../api/authApi";
+import { setAuth, setLoading } from "../features/authSlice";
+import { toast } from "react-toastify";
+import { useState } from "react";
 
-export default function LoginPage() {
-  const { login } = useAuth();
-  const [form, setForm] = useState({ email: '', password: '' });
+const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const dispatch = useDispatch();
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    dispatch(setLoading(true));
+
     try {
-      const res = await api.post('/auth/login', form);
-      login(res.data.accessToken);
+        const loading = useSelector((state) => state.auth.loading);
+      const res = await loginUser(email, password);
+      dispatch(setAuth({ userId: res.userId}));
+        toast.success("Login successful");
     } catch (err) {
-      console.error(err.response.data.message);
+        console.error("Login failed:", err.response?.data?.message || err.message);
+        toast.error(err.response?.data?.message || "Login failed");
+    } finally {
+      dispatch(setLoading(false));
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input type="email" onChange={(e) => setForm({ ...form, email: e.target.value })} />
-      <input type="password" onChange={(e) => setForm({ ...form, password: e.target.value })} />
-      <button type="submit">Login</button>
+    <form onSubmit={handleLogin}>
+      <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
+      <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
+      <button type="submit" disabled={loading}>
+        {loading ? "Logging in..." : "Login"}
+        </button>
     </form>
   );
-}
+};
+
+export default Login;

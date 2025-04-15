@@ -1,13 +1,32 @@
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useSelector, useDispatch } from "react-redux";
+import { clearAuth } from "../features/authSlice";
+import axios from "axios";
+import { toast } from "react-toastify";
 
-function Navbar() {
-    const navigate = useNavigate()
+
+const Navbar = () => {
+  const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector(state => state.auth);
+
+  const handleLogout = async () => {
+    try {
+      await axios.post("/api/auth/logout", {}, { withCredentials: true });
+      dispatch(clearAuth());
+      toast.success("Logged out");
+    } catch (err) {
+      toast.error("Logout failed");
+    }
+  };
+
   return (
-    <div>
-        <button onClick={()=>navigate('/login')}>login</button>
-    </div>
-  )
-}
+    <nav>
+      {isAuthenticated ? (
+        <button onClick={handleLogout}>Logout</button>
+      ) : (
+        <a href="/login">Login</a>
+      )}
+    </nav>
+  );
+};
 
-export default Navbar
+export default Navbar;
