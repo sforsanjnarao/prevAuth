@@ -1,18 +1,20 @@
 // src/pages/VaultPage.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback ,useMemo} from 'react';
 // Import the NEW vaultApi service
 import { fetchVaultEntries } from '../api/vaultApi';
 // Import child components later:
 import VaultItem from '../components/VaultItem';
 import VaultFormModal from '../components/VaultFormModal';
 import { toast } from 'react-toastify'; 
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'; 
 
 function VaultPage() {
-    const [entries, setEntries] = useState([]);
+    const [allEntries, setAllEntries] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showModal, setShowModal] = useState(false); // For Add/Edit modal
     const [entryToEdit, setEntryToEdit] = useState(null); // null for Add, object for Edit
+    const [searchTerm, setSearchTerm] = useState(''); 
 
     // Function to load entries (uses the new vaultApi service)
     const loadEntries = useCallback(async () => {
@@ -22,7 +24,7 @@ function VaultPage() {
             // Call the function from vaultApi.js
             const response = await fetchVaultEntries();
             if (response.success) {
-                setEntries(response.data || []);
+                setAllEntries(response.data || []);
             } else {
                  throw new Error(response.msg || 'Failed to fetch entries');
             }
@@ -30,7 +32,7 @@ function VaultPage() {
             const errorMsg = err.message || 'An unexpected error occurred while fetching entries.';
             setError(errorMsg); // Keep error state for potential inline display
             toast.error(`Failed to load vault: ${errorMsg}`); // <--- Error Toast for fetch failure
-            setEntries([]);
+            setAllEntries([]);
         }  finally {
             setIsLoading(false);
         }
@@ -40,6 +42,22 @@ function VaultPage() {
     useEffect(() => {
         loadEntries();
     }, [loadEntries]);
+
+    // --- Filtering Logic ---
+    // useMemo ensures filtering only runs when searchTerm or allEntries changes
+    const filteredEntries = useMemo(() => {
+        if (!searchTerm) {
+            return allEntries; // Return all if no search term
+        }
+        const lowerCaseSearchTerm = searchTerm.toLowerCase();
+        return allEntries.filter(entry =>
+            entry.appName?.toLowerCase().includes(lowerCaseSearchTerm) ||
+            entry.username?.toLowerCase().includes(lowerCaseSearchTerm) ||
+            entry.url?.toLowerCase().includes(lowerCaseSearchTerm) ||
+            entry.category?.toLowerCase().includes(lowerCaseSearchTerm)
+            // Add other fields to search if needed (e.g., notes - but notes aren't fetched initially)
+        );
+    }, [allEntries, searchTerm]);
 
     // --- Modal Handlers (Same as before) ---
     const handleOpenAddModal = () => {
@@ -65,9 +83,13 @@ function VaultPage() {
      // --- Delete Handler (logic passed down) ---
      const handleDeleteEntry = useCallback((entryId) => {
         // Function logic goes here...
-        setEntries(prevEntries => prevEntries.filter(entry => entry._id !== entryId));
+        setAllEntries(prevEntries => prevEntries.filter(entry => entry._id !== entryId));
         console.log(`Entry ${entryId} removed from local state.`);
     }, []); // <-- Dependency array
+
+    const handleSearchChange = (event) => {
+        setSearchTerm(event.target.value);
+    };
     
 
     // --- Rendering Logic (Tailwind CSS - Same as before) ---
@@ -85,6 +107,28 @@ function VaultPage() {
                 </button>
             </div>
 
+
+
+             {/* --- Search Bar --- */}
+             <div className="mb-6">
+                 <label htmlFor="search-vault" className="sr-only">Search Vault</label>
+                 <div className="relative rounded-md shadow-sm">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    </div>
+                    <input
+                        type="search"
+                        name="search-vault"
+                        id="search-vault"
+                        className="block w-full rounded-md border border-gray-300 py-2 pl-10 pr-3 text-sm placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500"
+                        placeholder="Search by App Name, Username, URL, Category..."
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                    />
+                 </div>
+            </div>
+
+
             {/* Loading State */}
             {isLoading && (
                 <div className="text-center py-10">
@@ -93,34 +137,49 @@ function VaultPage() {
             )}
 
             {/* Error State */}
-            {error && (
+            {!isLoading && error && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
                     <strong className="font-bold">Error:</strong>
                     <span className="block sm:inline"> {error}</span>
                 </div>
             )}
 
-            {/* Empty State */}
-            {!isLoading && !error && entries.length === 0 && (
-                <div className="text-center py-10 bg-gray-50 rounded-lg">
-                    <p className="text-gray-500">Your vault is currently empty. Add your first entry!</p>
-                </div>
-            )}
+            {/* Results Area */}
+                {!isLoading && !error && (
+                <>
+                    {/* Show count or different message when searching */}
+                    {searchTerm && (
+                        <p className="text-sm text-gray-500 mb-4">
+                            Found {filteredEntries.length} matching entries for "{searchTerm}".
+                        </p>
+                    )}
 
-            {/* Entries List */}
-            {!isLoading && !error && entries.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Map over entries and render VaultItem */}
-                    {entries.map(entry => (
-                         
-                        <VaultItem
-                           key={entry._id}
-                           entry={entry}
-                           onEdit={() => handleOpenEditModal(entry)}
-                           onDeleteSuccess={handleDeleteEntry} // Pass state update callback
-                        />
-                    ))}
-                </div>
+                {/* Empty State */}
+                {filteredEntries.length === 0 && (
+                        <div className="text-center py-10 bg-gray-50 rounded-lg">
+                            <p className="text-gray-500">
+                                {searchTerm
+                                    ? `No entries found matching "${searchTerm}".`
+                                    : "Your vault is currently empty. Add your first entry!"
+                                }
+                            </p>
+                        </div>
+                    )}
+
+                {/* Entries List - Use filteredEntries */}
+                {filteredEntries.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {filteredEntries.map(entry => ( // <-- MAP OVER filteredEntries
+                                <VaultItem
+                                   key={entry._id}
+                                   entry={entry}
+                                   onEdit={() => handleOpenEditModal(entry)}
+                                   onDeleteSuccess={handleDeleteEntry}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </>
             )}
 
             {/* Modal Placeholder (Same as before) */}
