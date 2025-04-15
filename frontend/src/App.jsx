@@ -27,7 +27,6 @@ function App() {
   return (
     <div>
         
-      <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -45,7 +44,7 @@ function App() {
         </Routes>
         <ToastContainer position="top-center" />
 
-      </BrowserRouter>
+       
     </div>
   )
 }
