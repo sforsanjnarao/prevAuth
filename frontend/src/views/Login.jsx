@@ -17,8 +17,8 @@ const Login = () => {
     dispatch(setLoading(true));
     try {
       const res = await loginUser(email, password);
-      console.log(res)
-      console.log(res.userId)
+      console.log('babab',res)
+      // console.log('lalala',res.data.userId)
       dispatch(setAuth({ userId: res.userId }));
         toast.success("Login successful");
     } catch (err) {
