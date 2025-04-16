@@ -1,5 +1,5 @@
 import React from 'react'
-import Navbar from '../components/Navbar'
+// import Navbar from '../components/Navbar'
 import Header from '../components/Header'
 
 function Home() {
@@ -7,7 +7,7 @@ function Home() {
     <div>Home
         <h1>Welcome to My React App</h1>
         <p>This is the home page</p>
-        <Navbar/>
+        {/* <Navbar/> */}
         <Header/>
     </div>
   )
