@@ -6,6 +6,7 @@ import connectDB from './src/db/db.js';
 import authRouter from './src/routes/auth.route.js';
 import userRouter from './src/routes/user.router.js';
 import vaultRouter from './src/routes/vault.route.js';
+import fakerDataRouter from './src/routes/fakerData.route.js'; 
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -20,6 +21,7 @@ app.use(cors({origin:'http://localhost:5173',credentials:true}));
 app.use('/api/auth',authRouter);
 app.use('/api/user', userRouter);
 app.use('/api/vault', vaultRouter);
+app.use('api/fakedata', fakerDataRouter);
 
 app.get('/', (req, res) => {
   res.send('Hello World!');

@@ -8,5 +8,9 @@ export const generateFakeName = () => {
 // Generate a reasonably strong password for the Mail.tm account
 export const generateMailTmPassword = () => {
     // Example: 12 chars, mix of cases, numbers, symbols
-    return faker.internet.password({ length: 14, memorable: false, pattern: /[A-Za-z0-9!@#$%^&*()]/ });
+    return faker.internet.password({ 
+        length: 14, 
+        memorable: false,
+        pattern: /[A-Za-z0-9!@#$%^&*()]/ 
+    });
 };
