@@ -50,9 +50,10 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route element={<PrivateRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path='/vault' element={<VaultPage/>}/>
+            <Route path='/breach-check' element={<BreachCheckPage/>}/>
           </Route>
-          <Route path='/vault' element={<VaultPage/>}/>
-          <Route path='/breach-check' element={<BreachCheckPage/>}/>
+          
         </Routes>
 
        

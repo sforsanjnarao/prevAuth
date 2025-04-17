@@ -15,7 +15,7 @@ const authSlice = createSlice({
             // state.accessToken=action.payload.accessToken;
             if (action.payload.userId) {
                 state.isAuthenticated = true;
-              }
+            }
         },
         clearAuth(state) {
             state.userId=null;
@@ -33,4 +33,5 @@ const authSlice = createSlice({
 })
 
 export const { setAuth, clearAuth, setLoading,setAccessToken } = authSlice.actions;
+
 export default authSlice.reducer;

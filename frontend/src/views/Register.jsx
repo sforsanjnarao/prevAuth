@@ -19,7 +19,7 @@ const Register = () => {
     dispatch(setLoading(true));
     try {
       const res = await registerUser(formData.name, formData.email, formData.password);
-      console.log(res)
+      console.log(res.data.userId, res.userId);
       console.log(dispatch(setAuth({ userId: res.userId })));
      
       dispatch(setAuth({ userId: res.userId }));
