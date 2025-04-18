@@ -1,19 +1,14 @@
 // controllers/fakeData.controller.js
 
-import FakeUserDataModel from '../models/FakeUserData.js'; // Your new model
-import { tryCatch } from '../utils/tryCatch.js'; // Your tryCatch wrapper
-import AppError from '../utils/AppError.js'; // Your custom error class
-import { faker } from '@faker-js/faker'; // Using faker directly here for username part
+import FakeUserDataModel from '../module/fakeUserData.js'; 
+import { tryCatch } from '../utils/tryCatch.js'; 
+import AppError from '../utils/AppError.js'; 
+import { faker } from '@faker-js/faker'; 
 
-// Import your utility functions
 import { generateFakeName, generateMailTmPassword } from '../utils/fakeDataGenerator.js';
-import { getMailTmDomains, createMailTmAccount, loginMailTmAccount, listMessages, getMessage } from '../utils/mailTmService.js';
-// Choose ONE method for server encryption functions:
-// Option A (Separate File - Recommended)
-import { encryptServerData, decryptServerData } from '../utils/serverEncryption.js';
-// Option B (Combined File)
+import { getMailTmDomains, createMailTmAccount, loginMailTmAccount, listMessages, getMessage } from '../utils/mailTmServices.js';
+import { encryptServerData, decryptServerData } from '../utils/fakeServerEncryption.js';
 // import { encryptWithServerKey, decryptWithServerKey } from '../utils/encryption.js';
-// Make sure to use the correct function names below based on your choice
 
 // --- Generate Fake Data + Mail.tm Account ---
 export const generateData = tryCatch(async (req, res) => {

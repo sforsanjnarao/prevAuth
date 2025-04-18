@@ -6,7 +6,7 @@ import {
     getHistory,
     viewInbox,
     viewEmailDetail
-} from '../controllers/fakeData.controller.js'; // Import controller functions
+} from '../controller/fakeData.controller.js'; // Import controller functions
 
 const router = express.Router();
 
