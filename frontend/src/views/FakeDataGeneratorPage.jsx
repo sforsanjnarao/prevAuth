@@ -42,7 +42,7 @@ const HistoryItem = ({ item }) => {
             </div>
             <div className='flex-shrink-0'>
                 <Link
-                    to={`/fake-data/inbox/${item._id}`} // Link to the inbox view
+                    to={`/fakedata/inbox/${item._id}`} // Link to the inbox view
                     className="inline-flex items-center bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium py-1 px-3 rounded transition duration-150 ease-in-out"
                 >
                     <EnvelopeIcon className="h-4 w-4 mr-1" />
@@ -62,6 +62,7 @@ function FakeDataGeneratorPage() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState(null); // For history fetch errors
     // Store recently generated profiles for immediate display
+
     const [recentlyGenerated, setRecentlyGenerated] = useState([]);
 
     // Fetch history on mount
@@ -98,7 +99,7 @@ function FakeDataGeneratorPage() {
         setRecentlyGenerated([]); // Clear previous recent results
         setError(null); // Clear previous errors
         try {
-            const response = await generateFakeData(count);
+            const response = await generateFakeData(count); // Call API {/fakedata/generate} to generate data
             if (response.success) {
                 toast.success(response.msg || `Generated ${response.generated?.length || 0} entries.`);
                 setRecentlyGenerated(response.generated || []); // Show newly generated
@@ -142,7 +143,7 @@ function FakeDataGeneratorPage() {
                             min="1"
                             max="5" // Match backend limit
                             value={count}
-                            onChange={handleCountChange}
+                            onChange={handleCountChange} 
                             disabled={isGenerating}
                             className="block w-full sm:w-32 px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:opacity-50"
                         />
@@ -165,9 +166,9 @@ function FakeDataGeneratorPage() {
                         )}
                     </button>
                 </div>
-                 <p className="text-xs text-gray-500 mt-4">
+                 {/* <p className="text-xs text-gray-500 mt-4">
                     This will create fake user profile(s) and generate a functional temporary email address for each using the <a href="https://mail.tm/" target="_blank" rel="noopener noreferrer" className='text-blue-600 hover:underline'>Mail.tm</a> service.
-                </p>
+                </p> */}
             </div>
 
             {/* Display Recently Generated (Optional) */}
@@ -186,7 +187,7 @@ function FakeDataGeneratorPage() {
                                  <p><strong>Age:</strong> {item.age}</p>
                                  <p><strong>Address:</strong> {item.address}</p>
                                  <Link
-                                    to={`/fake-data/inbox/${item._id}`}
+                                    to={`/fakedata/inbox/${item._id}`}
                                     className="text-blue-600 hover:underline text-sm mt-1 inline-block"
                                 >
                                     View Inbox

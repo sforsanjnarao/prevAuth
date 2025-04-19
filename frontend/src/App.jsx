@@ -53,7 +53,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path='/vault' element={<VaultPage/>}/>
             <Route path='/breach-check' element={<BreachCheckPage/>}/>
-            <Route path='/fake-data' element={<FakeDataGeneratorPage/>}/>
+            <Route path='/fakedata' element={<FakeDataGeneratorPage/>}/>
           </Route>
           
         </Routes>

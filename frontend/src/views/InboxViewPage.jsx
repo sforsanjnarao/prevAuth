@@ -111,7 +111,7 @@ function InboxViewPage() {
 
     return (
         <div className="container mx-auto p-4 md:p-6 lg:p-8">
-             <Link to="/fake-data" className="text-sm text-blue-600 hover:underline mb-4 inline-block">← Back to Generator</Link>
+             <Link to="/fakedata" className="text-sm text-blue-600 hover:underline mb-4 inline-block">← Back to Generator</Link>
             <div className='flex flex-col sm:flex-row justify-between items-center mb-4 gap-3'>
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-2">
                      <InboxIcon className='h-7 w-7 text-indigo-600'/>

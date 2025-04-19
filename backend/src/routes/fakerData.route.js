@@ -28,7 +28,7 @@ router.get('/history', getHistory);
 // View the inbox (list messages) for a specific generated email account
 // GET /api/fakedata/inbox/:id
 // :id is the _id of the FakeUserData document
-router.get('/inbox/:id', viewInbox);
+router.get('/inbox/:fakeDataId', viewInbox);
 
 // View the detailed content of a specific email within a generated inbox
 // GET /api/fakedata/email/:id/:messageId
