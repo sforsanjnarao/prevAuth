@@ -1,10 +1,11 @@
 // utils/serverEncryption.js
 import crypto from 'crypto';
 
-const algorithm = 'aes-256-gcm';
-const iv = crypto.randomBytes(12);
-const AUTH_TAG_LENGTH = 16; 
-const KEY_LENGTH = 32;  
+const ALGORITHM = 'aes-256-gcm';
+const IV_LENGTH = 12; // GCM standard
+const AUTH_TAG_LENGTH = 16; // GCM default
+const KEY_LENGTH = 32; // 32 bytes = 256 bits
+
 const secretKey = process.env.MAIL_TM_PASSWORD_ENCRYPTION_KEY;
 
 let keyBuffer;
@@ -24,7 +25,8 @@ try {
 
 export const encryptServerData = (plaintext) => {
   try {
-    const cipher = crypto.createCipheriv(algorithm, keyBuffer, iv, { authTagLength: AUTH_TAG_LENGTH });
+    const iv = crypto.randomBytes(IV_LENGTH);
+    const cipher = crypto.createCipheriv(ALGORITHM, keyBuffer, iv, { authTagLength: AUTH_TAG_LENGTH });
 
     let encrypted = cipher.update(plaintext, 'utf8', 'base64');
     encrypted += cipher.final('base64');
@@ -47,10 +49,12 @@ export const decryptServerData = (ivBase64, encryptedDataBase64, authTagBase64) 
     const encryptedData = Buffer.from(encryptedDataBase64, 'base64');
     const authTag = Buffer.from(authTagBase64, 'base64');
 
-    const decipher = crypto.createDecipheriv(algorithm, keyBuffer, iv, { authTagLength: AUTH_TAG_LENGTH }); //ham yeh algo secretKey aka key Buffer,iv and authTag length pass kar raha h
+    const decipher = crypto.createDecipheriv(ALGORITHM, keyBuffer, iv, { authTagLength: AUTH_TAG_LENGTH });
     decipher.setAuthTag(authTag);
+    console.log(`encryptedData: ${encryptedData.toString('base64')}`);
 
     let decrypted = decipher.update(encryptedData);
+    console.log(`decrypted: ${decrypted.toString('utf8')}`);
     decrypted = Buffer.concat([decrypted, decipher.final()]);
 
     return decrypted.toString('utf8');

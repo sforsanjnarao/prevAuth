@@ -46,6 +46,7 @@ export const createMailTmAccount = async (emailAddress, password) => { // email 
 // Log in to get JWT token
 export const loginMailTmAccount = async (emailAddress, password) => {
      try {
+        console.log('emailAddress:', emailAddress, 'password:', password)
         const response = await axios.post(`${MAILTMAPI}/token`, { address:emailAddress, password:password });
         if (!response.data?.token) {
             throw new Error("Login successful but no token received from Mail.tm");
