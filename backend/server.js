@@ -21,7 +21,7 @@ app.use(cors({origin:'http://localhost:5173',credentials:true}));
 app.use('/api/auth',authRouter);
 app.use('/api/user', userRouter);
 app.use('/api/vault', vaultRouter);
-app.use('api/fakedata', fakerDataRouter);
+app.use('/api/fakedata', fakerDataRouter);
 
 app.get('/', (req, res) => {
   res.send('Hello World!');

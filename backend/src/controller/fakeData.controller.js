@@ -22,7 +22,7 @@ export const generateData = tryCatch(async (req, res) => {
     }
 
     // Fetch available domains ONCE before the loop
-    const domains = await getMailTmDomains();
+    const domains = await getMailTmDomains(); // Fetch email domains from Mail.tm // domails are like gmail.com
     if (!domains || domains.length === 0) {
         throw new AppError(503, "Could not retrieve email domains from the service.", 503); // Service Unavailable
     }
@@ -35,13 +35,16 @@ export const generateData = tryCatch(async (req, res) => {
             // 1. Generate Fake Info
             const fakeName = generateFakeName();
             const mailTmPassword = generateMailTmPassword(); // Generate password for Mail.tm
+            console.log(`Generated password for ${fakeName}:`, mailTmPassword); 
 
             // 2. Create Mail.tm Email Address
-            const randomDomain = domains[Math.floor(Math.random() * domains.length)];
+            const randomDomain = domains[Math.floor(Math.random() * domains.length)]; //getting any random domain from the list
+            console.log(`Selected domain for ${fakeName}:`, randomDomain); // Log the selected domain
             // Generate a somewhat unique username part
             const usernamePart = `${faker.word.adjective()}${faker.word.noun()}${faker.number.int({ min: 100, max: 999 })}`;
-            const generatedEmail = `${usernamePart.toLowerCase().replace(/[^a-z0-9]/g, '')}@${randomDomain}`;
+            const generatedEmail = `${usernamePart.toLowerCase().replace(/[^a-z0-9]/g, '')}@${randomDomain}`; // creatin the whole email address with the random domain
 
+            console.log(`Generated email for ${fakeName}:`, generatedEmail); // Log the generated email
             // 3. Create Mail.tm Account via API
             const mailTmAccount = await createMailTmAccount(generatedEmail, mailTmPassword);
             if (!mailTmAccount || !mailTmAccount.id) {
@@ -133,15 +136,17 @@ export const viewInbox = tryCatch(async (req, res) => {
 
     // 3. Login to Mail.tm to get a token
     const mailTmToken = await loginMailTmAccount(fakeData.generatedEmail, mailTmPassword);
+    console.log(`mailTmToken ${mailTmToken}`)
     // We don't need the password anymore after getting the token
     mailTmPassword = null;
 
     // 4. Fetch messages using the token
     const messages = await listMessages(mailTmToken);
+    console.log(`message: ${messages}`)
 
     // 5. Respond with message list (only relevant header info)
     const messageHeaders = messages.map(msg => ({
-        id: msg.id, // Mail.tm Message ID
+        message_id: msg.id, // Mail.tm Message ID
         from: msg.from, // { address: "...", name: "..." }
         to: msg.to, // Array: [{ address: "...", name: "..." }]
         subject: msg.subject,
@@ -158,7 +163,6 @@ export const viewInbox = tryCatch(async (req, res) => {
         messages: messageHeaders,
     });
 });
-
 
 // --- View Specific Email Detail ---
 export const viewEmailDetail = tryCatch(async (req, res) => {

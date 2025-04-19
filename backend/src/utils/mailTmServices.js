@@ -1,6 +1,4 @@
-// utils/mailTmService.js
 import axios from 'axios';
-import { faker } from '@faker-js/faker'; // Or your preferred fake data generator
 
 const MAILTMAPI = process.env.MAIL_TM_API_BASE_URL || 'https://api.mail.tm';
 
@@ -8,16 +6,18 @@ const MAILTMAPI = process.env.MAIL_TM_API_BASE_URL || 'https://api.mail.tm';
 //Get available domains to create email
 let availableDomains = null;
 export const getMailTmDomains = async () => {
-    if (availableDomains) return availableDomains; // Return cached domains
+    if (availableDomains) return availableDomains; 
     try {
-        const response = await axios.get(`${MAILTMAPI}/domains`);
+        const response = await axios.get(`${MAILTMAPI}/domains`) // we are using get request cause we want the domail or data
         // Extract only active domains
-        availableDomains = response.data['hydra:member']?.filter(d => d.isActive).map(d => d.domain) || [];
+        availableDomains = response.data['hydra:member']
+        ?.filter(d => d.isActive) // Filter only active domains from response.data['hydra:member']
+        .map(d => d.domain) || [];//map only the is active domains
+        console.log("Available Mail.tm domains:", availableDomains);
          if (!availableDomains || availableDomains.length === 0) {
              throw new Error("No active domains found from Mail.tm");
          }
-        // Simple cache invalidation (e.g., every hour) could be added here
-        return availableDomains;
+        return availableDomains;  
     } catch (error) {
         console.error("Failed to fetch Mail.tm domains:", error.response?.data || error.message);
         throw new Error("Could not retrieve available email domains.");
@@ -26,10 +26,14 @@ export const getMailTmDomains = async () => {
 
 // --- Account Creation ---
 //Create a disposable email account
-export const createMailTmAccount = async (emailAddress, password) => { // we manually provide the email (address) and password.
+export const createMailTmAccount = async (emailAddress, password) => { // email and passwor are comming from the fakeData.controller.js
     try {
-        const response = await axios.post(`${MAILTMAPI}/accounts`, { emailAddress, password });
-        return response.data; // Contains id, address etc.
+        console.log(emailAddress, password)
+        const response = await axios.post(`${MAILTMAPI}/accounts`, { 
+            address:emailAddress, 
+            password:password 
+        }); // we are using post request cause we want to create a new account
+        return response.data;  
     } catch (error) {
         console.error("Mail.tm account creation failed:", error.response?.data || error.message);
         // Provide more specific error message if possible
@@ -42,7 +46,7 @@ export const createMailTmAccount = async (emailAddress, password) => { // we man
 // Log in to get JWT token
 export const loginMailTmAccount = async (emailAddress, password) => {
      try {
-        const response = await axios.post(`${MAILTMAPI}/token`, { emailAddress, password });
+        const response = await axios.post(`${MAILTMAPI}/token`, { address:emailAddress, password:password });
         if (!response.data?.token) {
             throw new Error("Login successful but no token received from Mail.tm");
         }
@@ -60,6 +64,7 @@ export const listMessages = async (token) => {
     try {
         const config = { headers: { Authorization: `Bearer ${token}` } };
         const response = await axios.get(`${MAILTMAPI}/messages`, config);
+        console.log('list message respone:', response.data)
         // Return only the messages array for simplicity
         return response.data['hydra:member'] || [];
     } catch (error) {

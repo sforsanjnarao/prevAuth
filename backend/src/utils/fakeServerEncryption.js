@@ -47,7 +47,7 @@ export const decryptServerData = (ivBase64, encryptedDataBase64, authTagBase64) 
     const encryptedData = Buffer.from(encryptedDataBase64, 'base64');
     const authTag = Buffer.from(authTagBase64, 'base64');
 
-    const decipher = crypto.createDecipheriv(algorithm, keyBuffer, iv, { authTagLength: AUTH_TAG_LENGTH });
+    const decipher = crypto.createDecipheriv(algorithm, keyBuffer, iv, { authTagLength: AUTH_TAG_LENGTH }); //ham yeh algo secretKey aka key Buffer,iv and authTag length pass kar raha h
     decipher.setAuthTag(authTag);
 
     let decrypted = decipher.update(encryptedData);
