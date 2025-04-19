@@ -12,6 +12,7 @@ import "react-toastify/dist/ReactToastify.css";
 import VaultPage from './views/VaultPage'
 import BreachCheckPage from './views/BreachCheckPage'
 import FakeDataGeneratorPage from './views/FakeDataGeneratorPage'
+import InboxViewPage from './views/InboxViewPage'
 
 function App() {
   // const { login } = useAuth();
@@ -54,6 +55,7 @@ function App() {
             <Route path='/vault' element={<VaultPage/>}/>
             <Route path='/breach-check' element={<BreachCheckPage/>}/>
             <Route path='/fakedata' element={<FakeDataGeneratorPage/>}/>
+            <Route path='/fakedata/inbox/:id' element={<InboxViewPage/>}/>
           </Route>
           
         </Routes>

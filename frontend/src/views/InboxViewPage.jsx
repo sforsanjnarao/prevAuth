@@ -1,7 +1,7 @@
 // src/pages/InboxViewPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom'; // useParams to get ID from URL, Link for navigation
-import { getEmailInboxList } from '../services/fakeDataApi'; // API function
+import { getEmailInboxList } from '../api/fakeDataApi'; // API function
 import { toast } from 'react-toastify';
 import { InboxIcon, ArrowPathIcon, EnvelopeIcon, PaperAirplaneIcon, ClockIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import EmailDetailViewModal from '../components/common/EmailDetailViewModal'; 
@@ -19,7 +19,7 @@ const EmailListItem = ({ message, onSelect }) => {
             onClick={() => onSelect(message.id)} // Pass the Mail.tm message ID up
             role="button"
             tabIndex={0}
-            onKeyPress={(e) => e.key === 'Enter' && onSelect(message.id)} // Basic keyboard accessibility
+            onKeyDown={(e) => e.key === 'Enter' && onSelect(message.id)} // Basic keyboard accessibility
         >
             <div className="flex-grow overflow-hidden mr-2">
                  <div className={`flex items-center text-sm ${isSeen ? 'text-gray-600' : 'text-gray-900'}`}>

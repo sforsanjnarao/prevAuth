@@ -1,7 +1,7 @@
 // src/components/common/EmailDetailViewModal.jsx
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal'; // Import the base Modal component
-import { getEmailDetail } from '../../services/fakeDataApi'; // Adjust path if needed
+import { getEmailDetail } from '../../api/fakeDataApi'; // Adjust path if needed
 import { toast } from 'react-toastify';
 import DOMPurify from 'dompurify'; // For sanitizing HTML before rendering
 

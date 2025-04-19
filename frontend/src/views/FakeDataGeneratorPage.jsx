@@ -42,6 +42,7 @@ const HistoryItem = ({ item }) => {
             </div>
             <div className='flex-shrink-0'>
                 <Link
+
                     to={`/fakedata/inbox/${item._id}`} // Link to the inbox view
                     className="inline-flex items-center bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium py-1 px-3 rounded transition duration-150 ease-in-out"
                 >
