@@ -36,6 +36,7 @@ export const generateData = tryCatch(async (req, res) => {
             const mailTmPassword = generateMailTmPassword(); // Generate password for Mail.tm
             console.log(`profile:`, profile); // Log the generated profile
 
+            console.log(`Mail.tm password for ${profile.firstName}:`, mailTmPassword); // Log the generated password
             // 2. Create Mail.tm Email Address
             const randomDomain = domains[Math.floor(Math.random() * domains.length)]; //getting any random domain from the list
             console.log(`Selected domain for ${profile.firstName}:`, randomDomain); // Log the selected domain

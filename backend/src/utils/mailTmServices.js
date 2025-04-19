@@ -47,7 +47,7 @@ export const createMailTmAccount = async (emailAddress, password) => { // email 
 export const loginMailTmAccount = async (emailAddress, password) => {
      try {
         console.log('emailAddress:', emailAddress, 'password:', password)
-        const response = await axios.post(`${MAILTMAPI}/token`, { address:emailAddress, password:password });
+        const response = await axios.post(`${MAILTMAPI}/token`, { address:emailAddress, password:'ZY8fqj8amqWjd1' });
         if (!response.data?.token) {
             throw new Error("Login successful but no token received from Mail.tm");
         }

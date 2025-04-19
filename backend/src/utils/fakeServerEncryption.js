@@ -49,6 +49,9 @@ export const decryptServerData = (ivBase64, encryptedDataBase64, authTagBase64) 
     const encryptedData = Buffer.from(encryptedDataBase64, 'base64');
     const authTag = Buffer.from(authTagBase64, 'base64');
 
+    if (iv.length !== IV_LENGTH) {
+        throw new Error("Invalid IV length during decryption.");
+    }
     const decipher = crypto.createDecipheriv(ALGORITHM, keyBuffer, iv, { authTagLength: AUTH_TAG_LENGTH });
     decipher.setAuthTag(authTag);
     console.log(`encryptedData: ${encryptedData.toString('base64')}`);
