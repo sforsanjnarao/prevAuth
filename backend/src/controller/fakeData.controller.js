@@ -33,6 +33,7 @@ export const generateData = tryCatch(async (req, res) => {
         try {
             // 1. Generate Fake Info
             const profile = generateFakeProfile();
+
             const mailTmPassword = generateMailTmPassword(); // Generate password for Mail.tm
             console.log(`profile:`, profile); // Log the generated profile
 
@@ -41,13 +42,14 @@ export const generateData = tryCatch(async (req, res) => {
             const randomDomain = domains[Math.floor(Math.random() * domains.length)]; //getting any random domain from the list
             console.log(`Selected domain for ${profile.firstName}:`, randomDomain); // Log the selected domain
             // Generate a somewhat unique username part
-            const emailUserPart = `${profile.firstName}.${profile.lastName}${faker.number.int({min:10,max:99})}`.toLowerCase().replace(/[^a-z0-9_.-]/g, '');
-            const generatedEmail = `${emailUserPart}@${randomDomain}`;
+            const usernamePart = Math.random().toString(36).substring(2, 10); 
+            // const emailUserPart = `${profile.firstName}.${profile.lastName}${faker.number.int({min:10,max:99})}`.toLowerCase().replace(/[^a-z0-9_.-]/g, '');
+            const generatedEmail = `${usernamePart}@${randomDomain}`;
 
 
             console.log(`Generated email for ${profile.firstName}:`, generatedEmail); // Log the generated email
             // 3. Create Mail.tm Account via API
-            const mailTmAccount = await createMailTmAccount(generatedEmail, mailTmPassword);
+            const mailTmAccount = await createMailTmAccount(generatedEmail, mailTmPassword);//not encrypt
             if (!mailTmAccount || !mailTmAccount.id) {
                 throw new Error(`Failed to create Mail.tm account for ${generatedEmail}.`);
             }
@@ -71,7 +73,7 @@ export const generateData = tryCatch(async (req, res) => {
 
                 generatedEmail,
                 mailTmDomain: randomDomain,
-                encryptedMailTmPassword: encryptedData,
+                encryptedMailTmPassword: encryptedData, // real encryprd  password
                 mailTmPasswordIv: iv,
                 mailTmPasswordAuthTag: authTag,
                 mailTmAccountId: mailTmAccount.id, // Store the ID from Mail.tm response
@@ -79,9 +81,10 @@ export const generateData = tryCatch(async (req, res) => {
             await fakeUserData.save();
             generatedResults.push({
                 _id: fakeUserData._id,
-                fullName: profile.fullName,
+                firstName: profile.firstName,
+                lastName: profile.lastName,
                 email: generatedEmail,
-                password: profile.password, 
+                password: encryptedData, // Only for demonstration; don't expose in production
                 dob: profile.dob.toISOString().split('T')[0], 
                 age: profile.age,
                 gender: profile.gender,
@@ -144,18 +147,18 @@ export const getHistory = tryCatch(async (req, res) => {
 export const viewInbox = tryCatch(async (req, res) => {
     const userId = req.user._id;
     const fakeDataId = req.params.id; // Get ID from URL param: /api/fakedata/inbox/:id
-
+    
     if (!fakeDataId) throw new AppError(400, "Missing generated data ID.", 400);
-
+    
     // 1. Find the record and verify ownership
     const fakeData = await FakeUserDataModel.findOne({ _id: fakeDataId, userId: userId })
-        .select('generatedEmail encryptedMailTmPassword mailTmPasswordIv mailTmPasswordAuthTag'); // Select needed fields
-        // console.log(`fakeData: ${fakeData}`)
-
+    .select('generatedEmail encryptedMailTmPassword mailTmPasswordIv mailTmPasswordAuthTag'); // Select needed fields
+    // console.log(`fakeData: ${fakeData}`)
+    
     if (!fakeData) {
         throw new AppError(404, "Generated data record not found or you are not authorized.", 404);
     }
-
+    
     // 2. Decrypt the Mail.tm Password using SERVER KEY
     let mailTmPassword;
     try {
@@ -167,21 +170,21 @@ export const viewInbox = tryCatch(async (req, res) => {
         );
         // console.log(`mailTmPassword: ${mailTmPassword}`) // Log the decrypted password
     } catch (decryptError) {
-         console.error(`Server decryption failed for FakeData ID ${fakeDataId}:`, decryptError);
-         throw new AppError(500, "Could not access required credentials.", 500); // Internal server error
+        console.error(`Server decryption failed for FakeData ID ${fakeDataId}:`, decryptError);
+        throw new AppError(500, "Could not access required credentials.", 500); // Internal server error
     }
-
+    
     console.log(`Decrypted Mail.tm password for ${fakeData.generatedEmail}:`, mailTmPassword); // Log the decrypted password
     // 3. Login to Mail.tm to get a token
     const mailTmToken = await loginMailTmAccount(fakeData.generatedEmail, mailTmPassword);
     console.log(`mailTmToken ${mailTmToken}`)
     // We don't need the password anymore after getting the token
     mailTmPassword = null;
-
+    
     // 4. Fetch messages using the token
     const messages = await listMessages(mailTmToken);
     console.log(`message: ${messages}`)
-
+    
     // 5. Respond with message list (only relevant header info)
     const messageHeaders = messages.map(msg => ({
         message_id: msg.id, // Mail.tm Message ID
@@ -194,13 +197,15 @@ export const viewInbox = tryCatch(async (req, res) => {
         size: msg.size,
         hasAttachments: msg.hasAttachments || false // Check if attachments exist
     }));
-
+    
     res.status(200).json({
         success: true,
         email: fakeData.generatedEmail,
-        messages: messageHeaders,
+        messages: messageHeaders.message_id,
     });
 });
+
+
 
 // --- View Specific Email Detail ---
 export const viewEmailDetail = tryCatch(async (req, res) => {
