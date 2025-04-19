@@ -5,17 +5,16 @@ import { tryCatch } from '../utils/tryCatch.js';
 import AppError from '../utils/AppError.js'; 
 import { faker } from '@faker-js/faker'; 
 
-import { generateFakeName, generateMailTmPassword } from '../utils/fakeDataGenerator.js';
+import { generateFakeProfile, generateMailTmPassword } from '../utils/fakeDataGenerator.js';
 import { getMailTmDomains, createMailTmAccount, loginMailTmAccount, listMessages, getMessage } from '../utils/mailTmServices.js';
 import { encryptServerData, decryptServerData } from '../utils/fakeServerEncryption.js';
-// import { encryptWithServerKey, decryptWithServerKey } from '../utils/encryption.js';
+
 
 // --- Generate Fake Data + Mail.tm Account ---
 export const generateData = tryCatch(async (req, res) => {
-    const userId = req.user._id; // From verifyJWT middleware
-    // Allow generating multiple, default to 1, add a reasonable max limit
+    const userId = req.user._id;  
     const count = parseInt(req.body.count || '1', 10);
-    const MAX_COUNT = 5; // Set a limit to prevent abuse
+    const MAX_COUNT = 5; 
 
     if (isNaN(count) || count <= 0 || count > MAX_COUNT) {
         throw new AppError(400, `Invalid count. Please provide a number between 1 and ${MAX_COUNT}.`, 400);
@@ -27,22 +26,22 @@ export const generateData = tryCatch(async (req, res) => {
         throw new AppError(503, "Could not retrieve email domains from the service.", 503); // Service Unavailable
     }
 
-    const generatedEntries = [];
+    const generatedResults = [];
     const errors = [];
 
     for (let i = 0; i < count; i++) {
         try {
             // 1. Generate Fake Info
-            const fakeName = generateFakeName();
+            const profile = generateFakeProfile();
             const mailTmPassword = generateMailTmPassword(); // Generate password for Mail.tm
-            console.log(`Generated password for ${fakeName}:`, mailTmPassword); 
 
             // 2. Create Mail.tm Email Address
             const randomDomain = domains[Math.floor(Math.random() * domains.length)]; //getting any random domain from the list
             console.log(`Selected domain for ${fakeName}:`, randomDomain); // Log the selected domain
             // Generate a somewhat unique username part
-            const usernamePart = `${faker.word.adjective()}${faker.word.noun()}${faker.number.int({ min: 100, max: 999 })}`;
-            const generatedEmail = `${usernamePart.toLowerCase().replace(/[^a-z0-9]/g, '')}@${randomDomain}`; // creatin the whole email address with the random domain
+            const emailUserPart = `${profile.firstName}.${profile.lastName}${faker.number.int({min:10,max:99})}`.toLowerCase().replace(/[^a-z0-9_.-]/g, '');
+            const generatedEmail = `${emailUserPart}@${randomDomain}`;
+
 
             console.log(`Generated email for ${fakeName}:`, generatedEmail); // Log the generated email
             // 3. Create Mail.tm Account via API
@@ -58,7 +57,16 @@ export const generateData = tryCatch(async (req, res) => {
             // 5. Save to DB
             const fakeUserData = new FakeUserDataModel({
                 userId,
-                fakeName,
+                fakeFirstName: profile.firstName,
+                fakeLastName: profile.lastName,
+                fakeDOB: profile.dob,
+                fakeGender: profile.gender,
+                fakeStreetAddress: profile.streetAddress,
+                fakeCity: profile.city,
+                fakeState: profile.state,
+                fakeZipCode: profile.zipCode,
+                fakeCountry: profile.country,
+
                 generatedEmail,
                 mailTmDomain: randomDomain,
                 encryptedMailTmPassword: encryptedData,
@@ -67,7 +75,18 @@ export const generateData = tryCatch(async (req, res) => {
                 mailTmAccountId: mailTmAccount.id, // Store the ID from Mail.tm response
             });
             await fakeUserData.save();
-            generatedEntries.push({ name: fakeName, email: generatedEmail }); // Return minimal info
+            generatedResults.push({
+                _id: fakeUserData._id,
+                fullName: profile.fullName,
+                email: generatedEmail,
+                password: profile.password, 
+                dob: profile.dob.toISOString().split('T')[0], 
+                age: profile.age,
+                gender: profile.gender,
+                address: `${profile.streetAddress}, ${profile.city}, ${profile.state} ${profile.zipCode}`,
+                country: profile.country,
+                createdAt: fakeUserData.createdAt
+            });
 
         } catch (error) {
             console.error(`Error generating entry ${i + 1}:`, error.message);
@@ -76,15 +95,15 @@ export const generateData = tryCatch(async (req, res) => {
         }
     } // End loop
 
-    if (generatedEntries.length === 0 && errors.length > 0) {
+    if (generatedResults.length === 0 && errors.length > 0) {
          // If ALL failed
          throw new AppError(500, `Failed to generate any data. Errors: ${errors.join('; ')}`, 500);
     }
 
     res.status(201).json({
         success: true,
-        msg: `Successfully generated ${generatedEntries.length} out of ${count} requested entries.`,
-        generated: generatedEntries,
+        msg: `Successfully generated ${generatedResults.length} out of ${count} requested entries.`,
+        generated: generatedResults,
         ...(errors.length > 0 && { warnings: errors }), // Include warnings if some failed
     });
 });
@@ -94,13 +113,28 @@ export const getHistory = tryCatch(async (req, res) => {
     const userId = req.user._id;
 
     const history = await FakeUserDataModel.find({ userId: userId })
-        .select('fakeName generatedEmail createdAt') // Select only needed fields
+        .select('fakeFirstName fakeLastName generatedEmail createdAt fakeDOB fakeGender fakeCity fakeState')
         .sort({ createdAt: -1 }); // Sort by newest first
+
+        const historyWithAge = history.map(item => {
+            const itemObj = item.toObject(); // Ensure virtuals are included if set on schema
+            return {
+                  _id: itemObj._id,
+                  fullName: `${itemObj.fakeFirstName} ${itemObj.fakeLastName}`, // Or use virtual if available
+                  email: itemObj.generatedEmail,
+                  dob: itemObj.fakeDOB ? new Date(itemObj.fakeDOB).toLocaleDateString() : 'N/A',
+                  age: itemObj.fakeAge, // Use virtual if available
+                  gender: itemObj.fakeGender || 'N/A',
+                  location: `${itemObj.fakeCity || ''}, ${itemObj.fakeState || ''}`,
+                  createdAt: itemObj.createdAt
+            };
+       });
+  
 
     res.status(200).json({
         success: true,
-        count: history.length,
-        data: history,
+        count: historyWithAge.length,
+        data: historyWithAge,
     });
 });
 
