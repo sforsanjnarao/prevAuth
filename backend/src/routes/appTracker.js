@@ -5,7 +5,7 @@ import {
     addEntry,
     getEntries,
     deleteEntry
-} from '../controllers/appTracker.controller.js'; // Import controller functions
+} from '../controller/appTracker.controller.js'; // Import controller functions
 
 const router = express.Router();
 

@@ -1,8 +1,8 @@
 // controllers/appTracker.controller.js
-import AppTrackerEntryModel from '../models/AppTrackerEntry.js';
+import AppTrackerEntryModel from '../module/appTrackingEntring.js';
 import { tryCatch } from '../utils/tryCatch.js';
 import AppError from '../utils/AppError.js';
-import { DATA_CATEGORIES, calculateRiskScore } from '../utils/appTrackerConstants.js'; // Import constants and helper
+import { DATA_CATEGORIES, calculateRiskScore } from '../utils/appTrackerConst.js'; // Import constants and helper
 
 // --- Add New App Tracker Entry ---
 export const addEntry = tryCatch(async (req, res) => {
