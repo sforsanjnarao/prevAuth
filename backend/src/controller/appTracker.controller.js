@@ -6,13 +6,11 @@ import { DATA_CATEGORIES, calculateRiskScore } from '../utils/appTrackerConst.js
 
 // --- Add New App Tracker Entry ---
 export const addEntry = tryCatch(async (req, res) => {
-    const userId = req.user._id; // From verifyJWT
-    const { appName, dataShared } = req.body;
-    // Add optional fields here if needed: const { appName, dataShared, appUrl, appCategory, notes } = req.body;
+    const userId = req.user._id;  
+    const { appName, dataShared, appUrl, appCategory, notes } = req.body;
 
 
-    // --- Validation ---
-    if (!appName || !dataShared) {
+    if (!appName || !dataShared || !appUrl || !appCategory || !notes) {
         throw new AppError(400, 'Application name and shared data categories are required.', 400);
     }
     if (!Array.isArray(dataShared) || dataShared.length === 0) {
@@ -32,8 +30,10 @@ export const addEntry = tryCatch(async (req, res) => {
         userId,
         appName,
         dataShared,
+        appUrl,
+        appCategory,
+        notes,
         calculatedRiskScore: riskScore,
-        // Add optional fields if provided in req.body: appUrl, appCategory, notes
     });
 
     await newEntry.save();

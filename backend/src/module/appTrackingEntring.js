@@ -19,6 +19,22 @@ const AppTrackerEntrySchema = new Schema({
         required: [true, 'At least one data category must be specified'],
         validate: [array => array.length > 0, 'At least one data category must be specified']
     },
+    // Optional fields (can be added later or now if desired)
+    appUrl: { // URL of the application/website
+        type: String,
+        trim: true,
+        default: null
+    },
+    appCategory: { // Category of the application (e.g., Social Media, Finance)
+        type: String,
+        trim: true,
+        default: null
+    },
+    notes: { // Any additional notes the user wants to add
+        type: String,
+        trim: true,
+        default: null
+    },
     calculatedRiskScore: { // Store the calculated risk score
         type: Number,
         required: true,
