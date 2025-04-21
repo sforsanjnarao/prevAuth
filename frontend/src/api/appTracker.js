@@ -5,23 +5,30 @@ const API_ENDPOINT = '/tracker'; // Base path for these routes based on your ser
 
 /**
  * Adds a new App Tracker entry.
- * @param {string} appName - The name of the app/service.
- * @param {string[]} dataShared - Array of data category strings.
+ * @param {object} entryData - Object containing app details.
+ * @param {string} entryData.appName - Required.
+ * @param {string[]} entryData.dataShared - Required. Array of data category strings.
+ * @param {string} [entryData.appUrl] - Optional.
+ * @param {string} [entryData.appCategory] - Optional.
+ * @param {string} [entryData.notes] - Optional.
  * @returns {Promise<object>} - Backend response { success, msg, data }
  */
-export const addAppEntry = async (appName, dataShared) => {
-    if (!appName || !Array.isArray(dataShared) || dataShared.length === 0) {
+
+export const addAppEntry = async (entryData) => {
+    // Basic validation moved here (optional, backend also validates)
+    if (!entryData.appName || !entryData.dataShared || !Array.isArray(entryData.dataShared) || entryData.dataShared.length === 0) {
         return Promise.reject(new Error('App Name and at least one Data Category are required.'));
     }
     try {
         // POST /api/tracker
-        const response = await axiosInstance.post(API_ENDPOINT, { appName, dataShared });
+        // Send the whole entryData object
+        const response = await axiosInstance.post(API_ENDPOINT, entryData);
         return response.data;
     } catch (error) {
         console.error("API Error - addAppEntry:", error.response?.data || error.message);
         throw error.response?.data || new Error('Failed to add app entry');
     }
-};
+}
 
 /**
  * Fetches all App Tracker entries for the logged-in user.

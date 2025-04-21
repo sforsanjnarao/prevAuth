@@ -10,7 +10,7 @@ export const addEntry = tryCatch(async (req, res) => {
     const { appName, dataShared, appUrl, appCategory, notes } = req.body;
 
 
-    if (!appName || !dataShared || !appUrl || !appCategory || !notes) {
+    if (!appName || !dataShared ) {
         throw new AppError(400, 'Application name and shared data categories are required.', 400);
     }
     if (!Array.isArray(dataShared) || dataShared.length === 0) {
@@ -28,11 +28,11 @@ export const addEntry = tryCatch(async (req, res) => {
     // --- Create and Save ---
     const newEntry = new AppTrackerEntryModel({
         userId,
-        appName,
+        appName:appName.trim(),
         dataShared,
-        appUrl,
-        appCategory,
-        notes,
+        appUrl:appUrl?.trim() || null,
+        appCategory:appCategory?.trim() || null, 
+        notes:notes?.trim() || null,
         calculatedRiskScore: riskScore,
     });
 
@@ -41,7 +41,7 @@ export const addEntry = tryCatch(async (req, res) => {
     // Return the created entry (optional, adjust fields as needed)
     // Select only non-sensitive fields to return by default
     const createdEntry = await AppTrackerEntryModel.findById(newEntry._id)
-                                        .select('appName dataShared calculatedRiskScore createdAt');
+                                        .select('appName dataShared calculatedRiskScore createdAt appUrl appCategory notes'); // Select needed fields
 
     res.status(201).json({
         success: true,
