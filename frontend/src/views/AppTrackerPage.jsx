@@ -1,6 +1,6 @@
 // src/pages/AppTrackerPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { getAppEntries, addAppEntry } from '../services/appTrackerApi'; // API functions
+import { getAppEntries, addAppEntry } from '../api/appTrackerApi'; // API functions
 import { CATEGORY_GROUPS } from '../constants/appTrackerConstants'; // Import categories
 import AppTrackerItem from '../components/AppTrackerItem'; // We will create this next
 import { toast } from 'react-toastify';

@@ -13,6 +13,8 @@ import VaultPage from './views/VaultPage'
 import BreachCheckPage from './views/BreachCheckPage'
 import FakeDataGeneratorPage from './views/FakeDataGeneratorPage'
 import InboxViewPage from './views/InboxViewPage'
+import AppTrackerPage from './views/AppTrackerPage'
+import AppTrackerItem from './components/AppTrackerItem'
 
 function App() {
   // const { login } = useAuth();
@@ -56,6 +58,9 @@ function App() {
             <Route path='/breach-check' element={<BreachCheckPage/>}/>
             <Route path='/fakedata' element={<FakeDataGeneratorPage/>}/>
             <Route path='/fakedata/inbox/:id' element={<InboxViewPage/>}/>
+            <Route path='/apptracker' element={<AppTrackerPage/>}/>
+            <Route path='/apptracker/:id' element={<AppTrackerItem/>}/>
+
           </Route>
           
         </Routes>
