@@ -1,8 +1,9 @@
 // src/pages/AppTrackerPage.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback,useMemo } from 'react';
 import { getAppEntries, addAppEntry } from '../api/appTrackerApi'; // API functions
 import { CATEGORY_GROUPS } from '../constants/appTrackerConstants'; // Import categories
 import AppTrackerItem from '../components/AppTrackerItem'; // We will create this next
+// import AppTrackerFormModal from '../components/AppTrackerFormModal';
 import { toast } from 'react-toastify';
 import { PlusCircleIcon } from '@heroicons/react/24/solid';
 
