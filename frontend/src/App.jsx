@@ -5,7 +5,7 @@ import Login from './views/Login'
 import EmailVerify from './views/EmailVerify'
 import ResetPassword from './views/ResetPassword'
 import Register from './views/Register'
-import Dashboard from './views/Dashboard'
+// import Dashboard from './views/Dashboard'
 import PrivateRoute from './components/PrivateRoutes'
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";

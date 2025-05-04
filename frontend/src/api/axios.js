@@ -5,7 +5,7 @@ import {store} from "../store";
 import { setAuth, clearAuth } from "../features/authSlice";
 import { toast } from "react-toastify";
 
-const BASE_URL = "http://localhost:3000/api";
+const BASE_URL = "https://prevauth.onrender.com/api";
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
