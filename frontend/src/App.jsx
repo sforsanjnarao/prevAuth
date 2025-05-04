@@ -53,7 +53,7 @@ function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/register" element={<Register />} />
           <Route element={<PrivateRoute />}>
-            <Route path="/dashboard" element={<Dashboard />} />
+            {/* <Route path="/dashboard" element={<Dashboard />} /> */}
             <Route path='/vault' element={<VaultPage/>}/>
             <Route path='/breach-check' element={<BreachCheckPage/>}/>
             <Route path='/fakedata' element={<FakeDataGeneratorPage/>}/>
