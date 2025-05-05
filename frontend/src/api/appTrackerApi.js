@@ -90,3 +90,23 @@ export const deleteAppEntry = async (entryId) => {
 
 // Add updateAppEntry later when implementing edit functionality
 // export const updateAppEntry = async (entryId, updateData) => { ... }
+
+/**
+ * Fetches statistics about the App Tracker entries for the logged-in user.
+ * @returns {Promise<object>} - Backend response { success: boolean, count: number, breachedCount: number }
+ */
+export const getAppTrackerStats = async () => {
+  try {
+      // GET /api/tracker/stats (This endpoint needs to be created on the backend)
+      const response = await axiosInstance.get(`${API_ENDPOINT}/stats`);
+      return response.data;
+  } catch (error) {
+      console.error("API Error - getAppTrackerStats:", error.response?.data || error.message);
+      if (error.response?.status === 401 || error.response?.status === 403) {
+          throw new Error('Authentication failed. Please log in.');
+      }
+      // Return null or a default object instead of throwing an error for stats failure?
+      // Or let the caller handle the throw. Let's throw for now.
+      throw error.response?.data || new Error('Failed to fetch app tracker stats');
+  }
+};

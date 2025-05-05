@@ -1,6 +1,6 @@
 import React from 'react'
 import {BrowserRouter, Route, Routes } from 'react-router-dom'
-import Home from './views/Home'
+import HomePage from './views/HomePage'
 import Login from './views/Login'
 import EmailVerify from './views/EmailVerify'
 import ResetPassword from './views/ResetPassword'
@@ -47,7 +47,7 @@ function App() {
 
         
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/verify-email" element={<EmailVerify />} />
           <Route path="/reset-password" element={<ResetPassword />} />

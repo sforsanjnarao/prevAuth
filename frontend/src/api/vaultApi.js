@@ -101,3 +101,25 @@ export const deleteVaultEntry = async (entryId) => {
         throw error.response?.data || new Error('Failed to delete vault entry');
     }
 };
+
+
+// --- NEW FUNCTION ---
+/**
+ * Fetches statistics about the Vault entries for the logged-in user.
+ * @returns {Promise<object>} - Backend response { success: boolean, count: number }
+ */
+export const getVaultStats = async () => {
+    try {
+        // GET /api/vault/stats (This endpoint needs to be created on the backend)
+        const response = await axiosInstance.get(`${API_ENDPOINT}/stats`);
+        return response.data;
+    } catch (error) {
+        console.error("API Error - getVaultStats:", error.response?.data || error.message);
+        if (error.response?.status === 401 || error.response?.status === 403) {
+            throw new Error('Authentication failed. Please log in.');
+        }
+        // Let the caller handle the error / potential null return
+        throw error.response?.data || new Error('Failed to fetch vault stats');
+    }
+};
+// --- END NEW FUNCTION ---
