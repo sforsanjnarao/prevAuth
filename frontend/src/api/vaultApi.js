@@ -1,7 +1,7 @@
 // src/services/vaultApi.js
 import axiosInstance from '../api/axios'; // Your configured instance
 
-
+// const API_ENDPOINT
 
 // Fetches all vault entries (metadata only) for the logged-in user.
 export const fetchVaultEntries = async () => {

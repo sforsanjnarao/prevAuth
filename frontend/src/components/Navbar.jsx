@@ -104,7 +104,7 @@ function Navbar() {
                             ) : (
                                 <div className='space-x-4'>
                                      <Link to="/login" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Log in</Link>
-                                     <Link to="/signup" className="text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-md text-sm font-medium">Sign up</Link>
+                                     <Link to="/register" className="text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-md text-sm font-medium">Sign up</Link>
                                 </div>
                             )}
                         </div>
@@ -159,7 +159,7 @@ function Navbar() {
                     ) : (
                         <div className="space-y-1 px-2">
                              <Link to="/login" className="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white">Log in</Link>
-                             <Link to="/signup" className="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white">Sign up</Link>
+                             <Link to="/register" className="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white">Sign up</Link>
                         </div>
                     )}
                  </div>
