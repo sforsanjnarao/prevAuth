@@ -10,6 +10,7 @@ import {LoginUser, RegisterUser} from '../services/service.js';
 export const registerUser = async (req, res) => {
     const {name,email,password } = req.body;
     if (!name ||!email ||!password) return res.status(400).json({success:false, msg: 'Please enter all fields' });
+    try {
     
         const existingUser = await userModel.findOne({ email:email });
         
@@ -20,14 +21,6 @@ export const registerUser = async (req, res) => {
                 409
             )
         }
-        // const salt = await bcrypt.genSalt(10);
-        // const hashed = await bcrypt.hash(password, salt);
-        
-        // const user =new userModel({ name, email, password:hashed });
-        
-        
-        // await user.save();
-        try {
             const { accessToken, refreshToken, userId } = await RegisterUser(name, email, password);
 
             res.cookie('access_token', accessToken, {

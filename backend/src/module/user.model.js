@@ -70,8 +70,8 @@ userSchema.pre('save', async function(next) {
     // If you use bcrypt, the hashing logic should be here or in your controller before calling save
     if (this.isModified('password')) {
         // Example using bcrypt (make sure bcrypt is imported and installed)
-        // const salt = await bcrypt.genSalt(10);
-        // this.password = await bcrypt.hash(this.password, salt);
+         const salt = await bcrypt.genSalt(10);
+         this.password = await bcrypt.hash(this.password, salt);
     }
 
     next();
