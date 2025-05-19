@@ -1,7 +1,7 @@
 // src/services/vaultApi.js
 import axiosInstance from '../api/axios'; // Your configured instance
 
-// const API_ENDPOINT
+const API_ENDPOINT = '/vault'; // Base endpoint for vault operations
 
 // Fetches all vault entries (metadata only) for the logged-in user.
 export const fetchVaultEntries = async () => {
@@ -111,7 +111,7 @@ export const deleteVaultEntry = async (entryId) => {
 export const getVaultStats = async () => {
     try {
         // GET /api/vault/stats (This endpoint needs to be created on the backend)
-        const response = await axiosInstance.get(`${API_ENDPOINT}/stats`);
+        const response = await axiosInstance.get(`${API_ENDPOINT}`);
         return response.data;
     } catch (error) {
         console.error("API Error - getVaultStats:", error.response?.data || error.message);

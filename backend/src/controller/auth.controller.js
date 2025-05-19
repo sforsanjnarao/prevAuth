@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import userModel from '../module/user.model.js';
 import jwt from 'jsonwebtoken';
 import transporter from '../config/nodeMailer.js';

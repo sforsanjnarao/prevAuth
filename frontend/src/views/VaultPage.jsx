@@ -7,6 +7,7 @@ import VaultItem from '../components/VaultItem';
 import VaultFormModal from '../components/VaultFormModal';
 import { toast } from 'react-toastify'; 
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'; 
+import Navbar from '../components/Navbar';
 
 function VaultPage() {
     const [allEntries, setAllEntries] = useState([]);
@@ -94,7 +95,12 @@ function VaultPage() {
 
     // --- Rendering Logic (Tailwind CSS - Same as before) ---
     return (
-        <div className="container mx-auto p-4 md:p-6 lg:p-8">
+    <div className="flex flex-col">
+             {/* Navbar */}
+    <div className='relative w-full mb-5'>
+        <Navbar />
+    </div>
+        <div className="container mx-auto mt-10 p-4 md:p-6 lg:p-8">
             <h1 className="text-3xl font-bold mb-6 text-gray-800">Your Data Vault</h1>
 
             {/* Add New Entry Button */}
@@ -191,7 +197,7 @@ function VaultPage() {
                 />
             )}
         </div>
-    );
+</div>    );
 }
 
 export default VaultPage;

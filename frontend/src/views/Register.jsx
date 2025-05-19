@@ -26,7 +26,7 @@ function SignupPage() {
 
     const handleRegister = async (e) => {
         e.preventDefault();
-        setError(null); // Clear previous errors
+        setError(null);  
 
         // --- Client-side Validation ---
         if (!name || !email || !password || !confirmPassword) {
@@ -44,7 +44,6 @@ function SignupPage() {
             toast.warn("Password must be at least 8 characters long.");
             return;
         }
-        // Basic email format check (optional, backend validates too)
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             setError("Please enter a valid email address.");
              toast.warn("Please enter a valid email address.");
@@ -55,18 +54,11 @@ function SignupPage() {
 
         dispatch(setLoading(true));
         try {
-            // API call expects name, email, password
             const res = await registerUser(name, email, password);
             if (res.success) {
-                // Backend handles setting cookies. Dispatch setAuth to update Redux state.
-                // Assuming register API returns userId similar to login
-                 dispatch(setAuth({ userId: res.userId, accessToken: res.accessToken })); // Pass token if needed by setAuth
+                 dispatch(setAuth({ userId: res.userId, accessToken: res.accessToken })); 
                  toast.success(res.msg || "Registration successful!");
-                // Decide where to navigate:
-                // Option 1: Directly to vault (user might not be verified yet)
-                navigate('/vault');
-                // Option 2: To verification page
-                // navigate('/verify-email');
+                navigate('/dashboard');
             } else {
                 throw new Error(res.msg || "Registration failed");
             }
@@ -74,7 +66,6 @@ function SignupPage() {
             const errorMsg = err.response?.data?.msg || err.message || "Registration failed. Please try again.";
             console.error("Registration failed:", errorMsg);
             toast.error(errorMsg);
-            // Don't set the form error state here, rely on toast
         } finally {
             dispatch(setLoading(false));
         }

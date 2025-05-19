@@ -98,7 +98,7 @@ export const deleteAppEntry = async (entryId) => {
 export const getAppTrackerStats = async () => {
   try {
       // GET /api/tracker/stats (This endpoint needs to be created on the backend)
-      const response = await axiosInstance.get(`${API_ENDPOINT}/stats`);
+      const response = await axiosInstance.get(`${API_ENDPOINT}`);
       return response.data;
   } catch (error) {
       console.error("API Error - getAppTrackerStats:", error.response?.data || error.message);

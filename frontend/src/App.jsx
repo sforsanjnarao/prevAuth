@@ -1,73 +1,70 @@
-import React from 'react'
-import {BrowserRouter, Route, Routes } from 'react-router-dom'
-import HomePage from './views/HomePage'
-import Login from './views/Login'
-import EmailVerify from './views/EmailVerify'
-import ResetPassword from './views/ResetPassword'
-import Register from './views/Register'
-// import Dashboard from './views/Dashboard'
-import PrivateRoute from './components/PrivateRoutes'
+import React from 'react';
+import { Routes, Route } from 'react-router-dom'; // Remove BrowserRouter from here
+import HomePage from './views/HomePage';
+import Login from './views/Login';
+import EmailVerify from './views/EmailVerify';
+import ResetPassword from './views/ResetPassword';
+import Register from './views/Register';
+import PrivateRoute from './components/PrivateRoutes';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import VaultPage from './views/VaultPage'
-import BreachCheckPage from './views/BreachCheckPage'
-import FakeDataGeneratorPage from './views/FakeDataGeneratorPage'
-import InboxViewPage from './views/InboxViewPage'
-import AppTrackerPage from './views/AppTrackerPage'
-import AppTrackerItem from './components/AppTrackerItem'
+import VaultPage from './views/VaultPage';
+import BreachCheckPage from './views/BreachCheckPage';
+import FakeDataGeneratorPage from './views/FakeDataGeneratorPage';
+import InboxViewPage from './views/InboxViewPage';
+import AppTrackerPage from './views/AppTrackerPage';
+import AppTrackerItem from './components/AppTrackerItem';
+// import DashboardPage from './views/HomePage';
+import Navbar from './components/Navbar';
+import DashboardPage from './views/Dashboard';
 
 function App() {
-  // const { login } = useAuth();
-
-  // useEffect(() => {
-  //   const refreshAccessToken = async () => {
-  //     try {
-  //       const res = await api.get('/auth/refresh');
-  //       login(res.data.accessToken);
-  //     } catch (err) {
-  //       console.log("Session expired or user not logged in");
-  //     }
-  //   };
-  //   refreshAccessToken();
-  // }, []);
   return (
-    <div>
-        <ToastContainer
-            position="top-right"  
-            autoClose={3000} 
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="dark" // Or 'dark', 'colored'
-      />
-
-        
+    <div className="flex flex-col min-h-screen">
+      {/* Navbar appears on every page */}
+      <div className='fixed w-full z-30 top-0'>
+        <Navbar />
+      </div>
+      
+      {/* Main content area with padding to account for fixed navbar */}
+      <main className="flex-grow pt-16"> {/* pt-16 matches navbar height */}
         <Routes>
           <Route path="/" element={<HomePage />} />
+
+          {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/verify-email" element={<EmailVerify />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/register" element={<Register />} />
+
+          {/* Protected Routes */}
           <Route element={<PrivateRoute />}>
-            {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path='/vault' element={<VaultPage/>}/>
             <Route path='/breach-check' element={<BreachCheckPage/>}/>
             <Route path='/fakedata' element={<FakeDataGeneratorPage/>}/>
-            <Route path='/fakedata/inbox/:id' element={<InboxViewPage/>}/>
-            <Route path='/apptracker' element={<AppTrackerPage/>}/>
-            <Route path='/apptracker/:id' element={<AppTrackerItem/>}/>
-
+            <Route path='/fakedata/inbox/:id' element={<InboxViewPage/>}/> 
+            <Route path='/app-tracker' element={<AppTrackerPage/>}/>
+            <Route path='/app-tracker/:id' element={<AppTrackerItem/>}/>
           </Route>
-          
         </Routes>
+      </main>
 
-       
+      {/* Toast Container */}
+      <ToastContainer
+        position="top-right"  
+        autoClose={3000} 
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
     </div>
-  )
+  );
 }
-  
-export default App
+
+export default App;

@@ -1,296 +1,336 @@
-// // src/pages/DashboardPage.jsx
-// import React, { useState, useEffect } from 'react';
-// import { useSelector } from 'react-redux'; // To get user info and verification status
-// import { Link } from 'react-router-dom'; // For navigation buttons
-// import { toast } from 'react-toastify';
+import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { Button } from '@/components/ui/button';
+import {
+    KeyIcon, ShieldCheckIcon, UserGroupIcon, ListBulletIcon,
+    ShieldExclamationIcon, PlusIcon, BellAlertIcon,
+    ExclamationTriangleIcon, ArrowRightIcon, LockClosedIcon,
+    FingerPrintIcon, CodeBracketSquareIcon, UserCircleIcon
+} from '@heroicons/react/24/outline';
+import { getVaultStats } from '../api/vaultApi';
+import { getAppTrackerStats } from '../api/appTrackerApi';
+import { checkEmailBreachesDirect   } from '../api/BreachApi';
 
-// // Import API functions as needed (examples below)
-// import { getVaultItemCount } from '../api/vaultApi'; // Need to create this endpoint/logic
-// import { getAppTrackerSummary } from '../api/appTrackerApi'; // Need to create this endpoint/logic
-// import { checkMyEmailBreachesDirect } from '../api/BreachApi'; // If doing quick scan here
+// Stat Card Component
+const StatCard = ({ icon: Icon, title, value, isLoading, linkTo, bgColorClass = 'bg-gray-100', textColorClass = 'text-gray-800' }) => (
+    <div className={`p-5 rounded-lg shadow border ${isLoading ? 'animate-pulse bg-gray-50' : 'bg-white border-gray-200'} flex flex-col h-full`}>
+        <div className="flex items-center gap-3 mb-3">
+            <div className={`p-2 rounded-md ${bgColorClass}`}>
+                <Icon className={`h-5 w-5 ${textColorClass}`} />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
+        </div>
+        <div className="my-4">
+            {isLoading ? (
+                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+            ) : (
+                <p className="text-3xl font-bold text-gray-900">{value ?? 'N/A'}</p>
+            )}
+        </div>
+        {linkTo && !isLoading && (
+            <Link to={linkTo} className="mt-auto inline-flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                View details <ArrowRightIcon className="h-4 w-4 ml-1" />
+            </Link>
+        )}
+    </div>
+);
 
-// // Import Icons
-// import {
-//     ShieldCheckIcon,
-//     ShieldExclamationIcon,
-//     ExclamationTriangleIcon,
-//     LockClosedIcon,
-//     FingerPrintIcon, // Or Squares2X2Icon
-//     CodeBracketSquareIcon,
-//     PlusIcon,
-//     ArrowRightIcon,
-//     QuestionMarkCircleIcon
-// } from '@heroicons/react/24/outline';
+// Alert Card Component
+const AlertCard = ({ icon: Icon, title, children, linkTo, bgColorClass = 'bg-red-50', borderColorClass = 'border-red-200', iconColorClass = 'text-red-500' }) => (
+    <div className={`p-4 rounded-lg border ${borderColorClass} ${bgColorClass} flex items-start gap-3`}>
+        <Icon className={`h-5 w-5 mt-0.5 flex-shrink-0 ${iconColorClass}`} />
+        <div className="flex-1">
+            <h4 className="font-semibold text-gray-800">{title}</h4>
+            <div className="text-sm text-gray-600 mt-1">
+                {children}
+            </div>
+            {linkTo && (
+                <Link to={linkTo} className="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium mt-2">
+                    Take action <ArrowRightIcon className="h-4 w-4 ml-1" />
+                </Link>
+            )}
+        </div>
+    </div>
+);
 
+function DashboardPage() {
+    const { user, isVerified } = useSelector((state) => state.auth);
+    const userName = user?.name || 'User';
+    const userEmail = user?.email;
 
-// // Placeholder for data fetching - replace with actual API calls
-// const fetchDashboardData = async () => {
-//     // In a real app, this would make multiple API calls concurrently
-//     // or call a dedicated dashboard summary endpoint
-//     // For now, return mock data
-//     await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-//     return {
-//         vaultItemCount: 15, // Example
-//         appTrackerCount: 8,  // Example
-//         appTrackerRiskSummary: { critical: 1, high: 2, medium: 3, low: 2 }, // Example
-//         lastBreachScan: null, // Example: { date: new Date(), breachesFound: true } or null
-//     };
-// };
+    const [stats, setStats] = useState({
+        vaultCount: null,
+        trackerCount: null,
+        breachedCount: null,
+        riskSummary: null
+    });
+    const [isLoading, setIsLoading] = useState(true);
+    const [isScanning, setIsScanning] = useState(false);
+    const [scanResult, setScanResult] = useState(null);
 
-// function DashboardPage() {
-//     // --- Get User Info from Redux ---
-//     // Adjust selectors based on your authSlice structure
-//     const userName = useSelector((state) => state.auth.user?.name || 'User'); // Assuming name is stored
-//     const userEmail = useSelector((state) => state.auth.user?.email);
-//     const isVerified = useSelector((state) => state.auth.isVerified);
-//     const userId = useSelector((state) => state.auth.userId); // Needed if making user-specific API calls
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            setIsLoading(true);
+            try {
+                const [vaultRes, trackerRes] = await Promise.all([
+                    getVaultStats(),
+                    getAppTrackerStats(),
+                    
+                    
 
-//     // --- State for Dashboard Data ---
-//     const [dashboardData, setDashboardData] = useState(null);
-//     const [isLoading, setIsLoading] = useState(true);
-//     const [error, setError] = useState(null);
+                ]);
 
-//     // --- State for Quick Breach Scan ---
-//     const [isScanningBreach, setIsScanningBreach] = useState(false);
-//     const [quickScanResult, setQuickScanResult] = useState(null); // Store result of quick scan
+                setStats({
+                    vaultCount: vaultRes.count,
+                    trackerCount: trackerRes.count,
+                    breachedCount: trackerRes.breachedCount,
+                    riskSummary: trackerRes.riskSummary
+                });
+            } catch (error) {
+                toast.error("Failed to load dashboard data");
+                console.error("Dashboard error:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-//     // --- Fetch dashboard summary data ---
-//     useEffect(() => {
-//         const loadData = async () => {
-//             if (!userId) return; // Don't fetch if user ID isn't available yet
+        fetchDashboardData();
+    }, []);
 
-//             setIsLoading(true);
-//             setError(null);
-//             try {
-//                 // Replace with actual API call(s)
-//                 const data = await fetchDashboardData();
-//                 setDashboardData(data);
-//                 // Set initial quickScanResult based on fetched last scan data if available
-//                 if (data.lastBreachScan) {
-//                      setQuickScanResult({
-//                          breachesFound: data.lastBreachScan.breachesFound,
-//                          scanDate: data.lastBreachScan.date
-//                      });
-//                 }
+    const handleQuickScan = async () => {
+        if (!userEmail) {
+            toast.error("No email found for scanning");
+            return;
+        }
 
-//             } catch (err) {
-//                 console.error("Dashboard fetch error:", err);
-//                 setError("Could not load dashboard summary.");
-//                 toast.error("Could not load dashboard summary.");
-//             } finally {
-//                 setIsLoading(false);
-//             }
-//         };
-//         loadData();
-//     }, [userId]); // Re-fetch if user changes
+        setIsScanning(true);
+        try {
+            const result = await checkEmailBreachesDirect(userEmail);
+            setScanResult({
+                breachesFound: result.breachesFound,
+                count: result.breaches?.length || 0,
+                date: new Date()
+            });
+            toast[result.breachesFound ? 'warning' : 'success'](
+                result.breachesFound 
+                    ? `Found ${result.breaches.length} breach(es)` 
+                    : "No breaches found"
+            );
+        } catch (error) {
+            toast.error("Scan failed");
+            console.error("Scan error:", error);
+        } finally {
+            setIsScanning(false);
+        }
+    };
 
+    const renderRiskSummary = (summary) => {
+        if (!summary) return null;
+        const items = [
+            { label: 'Critical', count: summary.critical, color: 'bg-red-600' },
+            { label: 'High', count: summary.high, color: 'bg-orange-500' },
+            { label: 'Medium', count: summary.medium, color: 'bg-yellow-500' },
+            { label: 'Low', count: summary.low, color: 'bg-green-500' },
+        ];
+        return (
+            <div className="flex flex-wrap gap-2 mt-2">
+                {items.filter(i => i.count > 0).map(item => (
+                    <span key={item.label} className={`px-2 py-1 rounded-full text-xs font-medium text-white ${item.color}`}>
+                        {item.count} {item.label}
+                    </span>
+                ))}
+            </div>
+        );
+    };
 
-//     // --- Handler for Quick Breach Scan ---
-//     const handleQuickBreachScan = async () => {
-//         if (!userEmail) {
-//              toast.error("Cannot perform scan: User email not found.");
-//              return;
-//         }
-//         setIsScanningBreach(true);
-//         setQuickScanResult(null); // Clear previous result
-//         try {
-//             // Use the direct API call function for the quick scan
-//             const response = await checkMyEmailBreachesDirect(userEmail);
-//             setQuickScanResult({
-//                 breachesFound: response.breachesFound,
-//                 count: response.breaches?.length || 0,
-//                 scanDate: new Date() // Use current time for this scan
-//             });
-//              if (!response.breachesFound) {
-//                 toast.success("Quick Scan: No breaches found!");
-//              } else {
-//                 toast.warn(`Quick Scan: ${response.breaches.length} breach(es) found! View details for more info.`);
-//              }
-//              // TODO: Optionally, update the lastBreachScan date in the backend?
-//              // This might require another API call. For now, just shows frontend result.
+    return (
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            {/* Header */}
+            <div className="mb-8">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Welcome back, {userName}!</h1>
+                <p className="text-gray-600">Your security dashboard overview</p>
+            </div>
 
-//         } catch (err) {
-//              toast.error(`Breach scan failed: ${err.message}`);
-//         } finally {
-//             setIsScanningBreach(false);
-//         }
-//     };
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <StatCard 
+                    icon={LockClosedIcon}
+                    title="Vault Items"
+                    value={stats.vaultCount}
+                    isLoading={isLoading}
+                    linkTo="/vault"
+                    bgColorClass="bg-blue-50"
+                    textColorClass="text-blue-600"
+                />
+                <StatCard 
+                    icon={FingerPrintIcon}
+                    title="Tracked Apps"
+                    value={stats.trackerCount}
+                    isLoading={isLoading}
+                    linkTo="/app-tracker"
+                    bgColorClass="bg-purple-50"
+                    textColorClass="text-purple-600"
+                />
+                <StatCard 
+                    icon={ShieldExclamationIcon}
+                    title="Breached Apps"
+                    value={stats.breachedCount}
+                    isLoading={isLoading}
+                    linkTo="/breach-check"
+                    bgColorClass={stats.breachedCount > 0 ? 'bg-red-50' : 'bg-green-50'}
+                    textColorClass={stats.breachedCount > 0 ? 'text-red-600' : 'text-green-600'}
+                />
+                <StatCard 
+                    icon={CodeBracketSquareIcon}
+                    title="Developer Tools"
+                    value="Access"
+                    isLoading={isLoading}
+                    linkTo="/fakedata"
+                    bgColorClass="bg-indigo-50"
+                    textColorClass="text-indigo-600"
+                />
+            </div>
 
-//     // --- Render Helper for Risk Summary ---
-//      const renderRiskSummary = (summary) => {
-//         if (!summary) return null;
-//         const items = [
-//             { label: 'Critical', count: summary.critical, color: 'bg-red-600' },
-//             { label: 'High', count: summary.high, color: 'bg-orange-500' },
-//             { label: 'Medium', count: summary.medium, color: 'bg-yellow-500' },
-//             { label: 'Low', count: summary.low, color: 'bg-green-500' },
-//         ];
-//         return (
-//             <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
-//                 {items.filter(item => item.count > 0).map(item => (
-//                     <span key={item.label} className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${item.color} text-white`}>
-//                         {item.count} {item.label}
-//                     </span>
-//                 ))}
-//             </div>
-//         );
-//     };
+            {/* Alerts Section */}
+            <div className="space-y-4 mb-8">
+                {(stats.breachedCount > 0 || !isVerified) && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <h2 className="flex items-center gap-2 text-lg font-semibold text-yellow-800 mb-3">
+                            <BellAlertIcon className="h-5 w-5" />
+                            Action Recommended
+                        </h2>
+                        <div className="space-y-3">
+                            {stats.breachedCount > 0 && (
+                                <AlertCard
+                                    icon={ShieldExclamationIcon}
+                                    title="Breached Apps Detected"
+                                    linkTo="/app-tracker"
+                                >
+                                    You have {stats.breachedCount} app(s) that appeared in data breaches. 
+                                    Consider changing passwords for these services.
+                                </AlertCard>
+                            )}
+                            {!isVerified && (
+                                <AlertCard
+                                    icon={ExclamationTriangleIcon}
+                                    title="Email Not Verified"
+                                    linkTo="/verify-email"
+                                    bgColorClass="bg-blue-50"
+                                    borderColorClass="border-blue-200"
+                                    iconColorClass="text-blue-500"
+                                >
+                                    Verify your email to ensure account security and full feature access.
+                                </AlertCard>
+                            )}
+                        </div>
+                    </div>
+                )}
 
+                {/* Security Status Card */}
+                <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-5">
+                    <h2 className="text-lg font-semibold text-gray-800 mb-4">Security Status</h2>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                {isVerified ? (
+                                    <ShieldCheckIcon className="h-6 w-6 text-green-500" />
+                                ) : (
+                                    <ExclamationTriangleIcon className="h-6 w-6 text-yellow-500" />
+                                )}
+                                <span className={isVerified ? "text-green-600" : "text-yellow-600"}>
+                                    {isVerified ? "Email Verified" : "Email Not Verified"}
+                                </span>
+                            </div>
+                            {!isVerified && (
+                                <Button variant={"link"}>
+                                    <Link 
+                                        to="/verify-email" 
+                                        className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                                    >
+                                        Verify Now
+                                    </Link>
+                                </Button>
+                            )}
+                        </div>
 
-//     // --- Main Render ---
-//     if (isLoading) {
-//         return <div className="p-8 text-center text-gray-500">Loading Dashboard...</div>;
-//     }
+                        <div className="border-t pt-4">
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-sm font-medium text-gray-500">Breach Scan</h3>
+                                {scanResult?.date && (
+                                    <span className="text-xs text-gray-400">
+                                        Last scan: {scanResult.date.toLocaleDateString()}
+                                    </span>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="flex-1">
+                                    {!scanResult ? (
+                                        <p className="text-gray-500">No scan results available</p>
+                                    ) : scanResult.breachesFound ? (
+                                        <div className="flex items-center gap-2">
+                                            <ShieldExclamationIcon className="h-5 w-5 text-red-500" />
+                                            <span className="text-red-600">
+                                                {scanResult.count} breach(es) found
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2">
+                                            <ShieldCheckIcon className="h-5 w-5 text-green-500" />
+                                            <span className="text-green-600">No breaches found</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <button
+                                    onClick={handleQuickScan}
+                                    disabled={isScanning}
+                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md disabled:opacity-50"
+                                >
+                                    {isScanning ? 'Scanning...' : 'Run Scan'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-//     if (error) {
-//         return <div className="p-8 text-center text-red-600 bg-red-50 border border-red-200 rounded-md">{error}</div>;
-//     }
+            {/* Quick Actions */}
+            <div className="mb-8">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <Link
+                        to="/vault"
+                        className="flex items-center justify-center gap-2 p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50"
+                    >
+                        <KeyIcon className="h-5 w-5 text-blue-500" />
+                        <span>Add Vault Item</span>
+                    </Link>
+                    <Link
+                        to="/app-tracker"
+                        className="flex items-center justify-center gap-2 p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50"
+                    >
+                        <ListBulletIcon className="h-5 w-5 text-purple-500" />
+                        <span>Log App Data</span>
+                    </Link>
+                    <Link
+                        to="/breach-check"
+                        className="flex items-center justify-center gap-2 p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50"
+                    >
+                        <ShieldCheckIcon className="h-5 w-5 text-red-500" />
+                        <span>Check Breaches</span>
+                    </Link>
+                    <Link
+                        to="/fake-data"
+                        className="flex items-center justify-center gap-2 p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50"
+                    >
+                        <UserGroupIcon className="h-5 w-5 text-green-500" />
+                        <span>Generate Data</span>
+                    </Link>
+                </div>
+            </div>
+        </div>
+    );
+}
 
-//     return (
-//         <div className="container mx-auto p-4 md:p-6 lg:p-8">
-//             {/* Welcome Header */}
-//             <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome back, {userName}!</h1>
-//             <p className="text-gray-600 mb-8">Here's your security snapshot and quick access.</p>
-
-//              {/* Verification Notice (If needed - Could be integrated into Security Card) */}
-//              {/* <VerifyNotice /> */}
-
-//             {/* Grid for Summary Cards */}
-//             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-//                 {/* Security Status Card */}
-//                 <div className="bg-white p-5 rounded-lg shadow border border-gray-200 flex flex-col justify-between">
-//                     <div>
-//                          <h2 className="text-lg font-semibold text-gray-700 mb-3">Security Status</h2>
-
-//                          {/* Email Verification */}
-//                          <div className='flex items-center mb-4'>
-//                              {isVerified ? (
-//                                  <>
-//                                      <ShieldCheckIcon className='h-6 w-6 text-green-500 mr-2 flex-shrink-0'/>
-//                                      <span className='text-sm text-green-700 font-medium'>Email Verified</span>
-//                                  </>
-//                              ) : (
-//                                  <>
-//                                       <ExclamationTriangleIcon className='h-6 w-6 text-yellow-500 mr-2 flex-shrink-0'/>
-//                                       <div className='flex-grow'>
-//                                         <span className='text-sm text-yellow-700 font-medium'>Email Not Verified</span>
-//                                         <Link to="/verify-email" className="block text-xs text-indigo-600 hover:underline">Verify Now</Link>
-//                                       </div>
-//                                  </>
-//                              )}
-//                          </div>
-
-//                          {/* Data Breach Status */}
-//                          <div className='border-t pt-3'>
-//                             <p className='text-xs font-medium text-gray-500 mb-2'>Data Breach Scan (Email)</p>
-//                              <div className='flex items-center mb-2'>
-//                                  {!quickScanResult && !isScanningBreach && (
-//                                      <>
-//                                          <QuestionMarkCircleIcon className='h-6 w-6 text-gray-400 mr-2 flex-shrink-0'/>
-//                                          <span className='text-sm text-gray-600'>Scan hasn't been run recently.</span>
-//                                      </>
-//                                  )}
-//                                   {quickScanResult && !quickScanResult.breachesFound && (
-//                                      <>
-//                                          <ShieldCheckIcon className='h-6 w-6 text-green-500 mr-2 flex-shrink-0'/>
-//                                          <span className='text-sm text-green-700 font-medium'>No breaches found in last scan.</span>
-//                                      </>
-//                                  )}
-//                                   {quickScanResult && quickScanResult.breachesFound && (
-//                                      <>
-//                                           <ShieldExclamationIcon className='h-6 w-6 text-red-500 mr-2 flex-shrink-0'/>
-//                                           <span className='text-sm text-red-700 font-medium'>{quickScanResult.count} Breach(es) Found!</span>
-//                                      </>
-//                                  )}
-//                              </div>
-//                             {quickScanResult?.scanDate && <p className='text-xs text-gray-400 mb-3'>Last scan: {quickScanResult.scanDate.toLocaleString()}</p>}
-
-//                             <div className='flex gap-2 flex-wrap'>
-//                                 <button
-//                                     onClick={handleQuickBreachScan}
-//                                     disabled={isScanningBreach || !userEmail}
-//                                     className='inline-flex items-center text-sm bg-blue-500 hover:bg-blue-600 text-white font-medium py-1.5 px-3 rounded shadow-sm disabled:opacity-50'
-//                                 >
-//                                      {isScanningBreach ? 'Scanning...' : 'Run Quick Scan'}
-//                                 </button>
-//                                 <Link
-//                                     to="/breach-check"
-//                                     className='inline-flex items-center text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-1.5 px-3 rounded border border-gray-300'
-//                                 >
-//                                     View Full Report <ArrowRightIcon className='h-3 w-3 ml-1'/>
-//                                 </Link>
-//                             </div>
-//                          </div>
-//                     </div>
-//                 </div>
-
-//                 {/* Vault Summary Card */}
-//                 <div className="bg-white p-5 rounded-lg shadow border border-gray-200 flex flex-col justify-between">
-//                     <div>
-//                          <div className='flex items-center gap-3 mb-2'>
-//                             <LockClosedIcon className='h-8 w-8 text-indigo-600 opacity-75'/>
-//                              <h2 className="text-lg font-semibold text-gray-700">Password Vault</h2>
-//                          </div>
-//                          <div className='text-center my-4'>
-//                             <span className='text-4xl font-bold text-indigo-700'>{dashboardData?.vaultItemCount ?? '--'}</span>
-//                             <p className='text-sm text-gray-500 mt-1'>Items Secured</p>
-//                          </div>
-//                     </div>
-//                      <div className='flex gap-3 border-t pt-3 mt-auto'>
-//                         <Link to="/vault" className='flex-1 text-center text-sm bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-medium py-2 px-3 rounded'>View Vault</Link>
-//                         {/* Consider linking directly to open the add modal if possible */}
-//                         <Link to="/vault" state={{ openAddModal: true }} className='flex-1 text-center text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-3 rounded'>+ Add Item</Link>
-//                     </div>
-//                 </div>
-
-//                 {/* App Tracker Summary Card */}
-//                  <div className="bg-white p-5 rounded-lg shadow border border-gray-200 flex flex-col justify-between">
-//                      <div>
-//                          <div className='flex items-center gap-3 mb-2'>
-//                              <FingerPrintIcon className='h-8 w-8 text-teal-600 opacity-75'/>
-//                              <h2 className="text-lg font-semibold text-gray-700">App Tracker</h2>
-//                          </div>
-//                           <div className='text-center my-4'>
-//                             <span className='text-4xl font-bold text-teal-700'>{dashboardData?.appTrackerCount ?? '--'}</span>
-//                             <p className='text-sm text-gray-500 mt-1'>Apps Tracked</p>
-//                          </div>
-//                          {/* Risk Summary Visual */}
-//                          {dashboardData?.appTrackerRiskSummary && (
-//                             <div className='mb-3'>
-//                                  <p className='text-xs font-medium text-gray-500 mb-1'>Risk Overview:</p>
-//                                  {renderRiskSummary(dashboardData.appTrackerRiskSummary)}
-//                             </div>
-//                           )}
-
-//                      </div>
-//                       <div className='flex gap-3 border-t pt-3 mt-auto'>
-//                          <Link to="/app-tracker" className='flex-1 text-center text-sm bg-teal-100 hover:bg-teal-200 text-teal-700 font-medium py-2 px-3 rounded'>View Tracker</Link>
-//                          <Link to="/app-tracker" state={{ openAddModal: true }} className='flex-1 text-center text-sm bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-3 rounded'>+ Log App</Link>
-//                      </div>
-//                  </div>
-
-//                  {/* Fake Data Generator Card (If Feature Enabled) */}
-//                  <div className="bg-white p-5 rounded-lg shadow border border-gray-200 flex flex-col justify-between">
-//                      <div>
-//                          <div className='flex items-center gap-3 mb-2'>
-//                             <CodeBracketSquareIcon className='h-8 w-8 text-purple-600 opacity-75'/>
-//                              <h2 className="text-lg font-semibold text-gray-700">Developer Tools</h2>
-//                          </div>
-//                          <p className='text-sm text-gray-600 my-4'>
-//                              Generate realistic fake user profiles and functional temporary email addresses for testing purposes.
-//                          </p>
-//                      </div>
-//                      <div className='border-t pt-3 mt-auto'>
-//                          <Link to="/fake-data" className='block w-full text-center text-sm bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium py-2 px-3 rounded'>
-//                              Go to Generator <ArrowRightIcon className='h-3 w-3 inline ml-1'/>
-//                          </Link>
-//                      </div>
-//                  </div>
-
-//             </div> {/* End Grid */}
-//         </div>
-//     );
-// }
-
-// export default DashboardPage;
+export default DashboardPage;
