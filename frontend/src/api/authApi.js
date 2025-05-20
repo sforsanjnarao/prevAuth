@@ -3,34 +3,62 @@ import axiosInstance from "./axios";
 
 // Register
 export const registerUser = async (name, email, password) => {
-  const res = await axiosInstance.post("/auth/register", { name, email, password },{ withCredentials: true });
+  try{
+    const res = await axiosInstance.post("/auth/register", { name, email, password },{ withCredentials: true });
   return res.data;
+  }catch (error) {
+    console.error("API Error - registerUser:", error.response?.data || error.message);
+    throw error.response?.data || new Error('Failed to register user');
+  }
+  
 };
 
 // Login
 export const loginUser = async (email, password) => {
+  try{
   const res = await axiosInstance.post("/auth/login", { email, password });
   return res.data;
+  }catch (error) {
+    console.error("API Error - loginUser:", error.response?.data || error.message);
+    throw error.response?.data || new Error('Failed to login user');
+  }
 };
 
 // Logout
 export const logoutUser = async () => {
-  const res = await axiosInstance.post("/auth/logout");
-  return res.data;
+  try{
+    const res = await axiosInstance.post("/auth/logout");
+    return res.data;
+  }
+  catch (error) {
+    console.error("API Error - logoutUser:", error.response?.data || error.message);
+    throw error.response?.data || new Error('Failed to logout user');
+  }
 };
 
 // Refresh Token
-export const refreshAccessToken = async () => {
-  const res = await axiosInstance.post("/auth/refresh-token",{
-    withCredentials: true,
-  });
-  return res.data;
+export const refreshAccessToken = async () => { 
+  try{
+    const res = await axiosInstance.get("/auth/refresh-token", {
+      withCredentials: true,
+    });
+    return res.data;
+  }
+  catch (error) {
+    console.error("API Error - refreshAccessToken:", error.response?.data || error.message);
+    throw error.response?.data || new Error('Failed to refresh access token');
+  }
 };
 
 // get User Profile
 export const getProfile = async () => {
+  try{
     const res = await axiosInstance.get("/auth/me");
     return res.data;
+  }catch (error) {
+    console.error("API Error - getProfile:", error.response?.data || error.message);
+    throw error.response?.data || new Error('Failed to fetch user profile');
+  }
   };
 
 
