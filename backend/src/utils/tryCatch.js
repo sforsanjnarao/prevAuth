@@ -1,10 +1,4 @@
-const tryCatch = (controller) => async (req, res, next) => {
-    try {
-      await controller(req, res);
-    } catch (error) {
-      console.log(error);
-      return next(error);
-    }
-  };
-  
-  export {tryCatch}
+export const tryCatch = (controller) => (req, res, next) =>
+  controller(req, res, next).catch((err) => {
+    res.status(err.statusCode || 500).json({ success: false, msg: err.message });
+  });

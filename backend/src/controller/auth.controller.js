@@ -14,13 +14,10 @@ export const registerUser = async (req, res) => {
     
         const existingUser = await userModel.findOne({ email:email });
         
-        if (existingUser)  {
-            throw new AppError(
-                409,
-                "Email already exists in the database!",
-                409
-            )
-        }
+        if (existingUser) {
+    return res.status(400).json({ success: false, msg: 'Email already exists in the database!' });
+}
+
             const { accessToken, refreshToken, userId } = await RegisterUser(name, email, password);
 
             res.cookie('access_token', accessToken, {
