@@ -15,10 +15,10 @@ const port = process.env.PORT || 3000;
 connectDB(); 
 
 
-
+// ['https://prevauth.vercel.app' || 'http://localhost:5173']
 app.use(express.json());
 app.use(cookieParser({withCredentials: true}));
-app.use(cors({origin:'https://prevauth.vercel.app',credentials:true}));
+app.use(cors({origin: 'http://localhost:5173',credentials:true}));
 app.use('/api/auth',authRouter);
 app.use('/api/user', userRouter);
 app.use('/api/vault', vaultRouter);
