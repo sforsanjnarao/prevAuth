@@ -70,7 +70,8 @@ export const loginUser = tryCatch(async (req, res) => {
   
     // 3. Compare passwords
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect) {
+     console.log(isPasswordCorrect)
+    if (isPasswordCorrect) {
       throw new AppError(401, "Incorrect password! Please try again.", 401);
     }
   

@@ -6,8 +6,8 @@ import { tryCatch } from '../utils/tryCatch.js';
 export const getUserData=tryCatch(async (req, res) => {
   const userId = req.params.id;
   const foundUser = await userModel.findOne({ _id: userId });
-
   const data = {
+    name:foundUser.name,
     userEmail: foundUser.email,
   };
 
