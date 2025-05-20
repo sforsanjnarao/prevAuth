@@ -1,46 +1,20 @@
 // src/pages/AppTrackerPage.jsx
-import React, { useState, useEffect, useCallback,useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getAppEntries, addAppEntry } from '../api/appTrackerApi'; // API functions
 import { CATEGORY_GROUPS } from '../constants/appTrackerConstants'; // Import categories
 import AppTrackerItem from '../components/AppTrackerItem'; // We will create this next
 // import AppTrackerFormModal from '../components/AppTrackerFormModal';
 import { toast } from 'react-toastify';
-import { PlusCircleIcon } from '@heroicons/react/24/solid';
 
-// Reusable InputField component (optional, can define inline)
-const InputField = ({ label, id, value, onChange, placeholder = '', type = 'text', required = false, disabled = false }) => (
-    <div>
-        <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}{required && '*'}</label>
-        <input
-            type={type}
-            id={id}
-            name={id}
-            value={value}
-            onChange={onChange}
-            placeholder={placeholder}
-            required={required}
-            disabled={disabled}
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:opacity-50"
-        />
-    </div>
-);
+// Import shadcn/ui components
+import { Button } from "@/components/ui/button";      // Assuming default shadcn path
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { PlusCircleIcon, ArrowPathIcon as RefreshIcon } from '@heroicons/react/24/solid'; // Using solid for now
 
-// Reusable TextareaField component (optional)
-const TextareaField = ({ label, id, value, onChange, placeholder = '', rows = 3, disabled = false }) => (
-    <div>
-       <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-       <textarea
-           id={id}
-           name={id}
-           rows={rows}
-           value={value}
-           onChange={onChange}
-           placeholder={placeholder}
-           disabled={disabled}
-           className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:opacity-50"
-       />
-   </div>
-);
 
 
 function AppTrackerPage() {
@@ -95,13 +69,13 @@ function AppTrackerPage() {
     };
 
     // Handle checkbox changes for data categories
-    const handleCategoryChange = (event) => {
-        const { value, checked } = event.target;
+    const handleCategoryChange = (category, checked) => { // shadcn checkbox passes checked boolean
         setSelectedDataCategories(prev =>
-            checked ? [...prev, value] : prev.filter(cat => cat !== value)
+            checked ? [...prev, category] : prev.filter(cat => cat !== category)
         );
-        setFormError(null); // Clear error on change
+        setFormError(null);
     };
+
 
       // Reset form fields
       const resetForm = () => {
@@ -143,7 +117,6 @@ function AppTrackerPage() {
                 toast.success(response.msg || `Entry for "${payload.appName}" added.`);
                 resetForm(); // Reset form fields
                 loadEntries(); 
-                loadEntries(); // Refresh the list
             } else {
                  throw new Error(response.msg || 'Failed to add entry');
             }
@@ -163,115 +136,109 @@ function AppTrackerPage() {
 
     return (
         <div className="container mx-auto p-4 md:p-6 lg:p-8">
-            <h1 className="text-3xl font-bold mb-6 text-gray-800">App Data Tracker</h1>
-            <p className="text-gray-600 mb-6">Log which apps have access to your personal data to understand your digital footprint.</p>
-
-            {/* Add New Entry Form */}
-            <div className="bg-white p-6 rounded-lg shadow border border-gray-200 mb-8">
-                <h2 className="text-xl font-semibold mb-4 text-gray-700 flex items-center">
-                    <PlusCircleIcon className='h-6 w-6 mr-2 text-indigo-600'/>
-                    Log New App/Service
-                </h2>
-                <form onSubmit={handleAddEntry} className="space-y-4">
-                    {/* App Name Input */}
-                    <InputField
-                        label="App/Website Name"
-                        id="appName"
-                        value={formData.appName}
-                        onChange={handleFormChange} // Use general handler
-                        placeholder="e.g., Facebook, MyBank App"
-                        required
-                        disabled={isSubmitting}
-                    />
-                     <InputField
-                        label="App URL (Optional)"
-                        id="appUrl"
-                        value={formData.appUrl}
-                        onChange={handleFormChange}
-                        placeholder="e.g., https://facebook.com"
-                        type="url"
-                        disabled={isSubmitting}
-                    />
-                    <InputField
-                        label="App Category (Optional)"
-                        id="appCategory"
-                        value={formData.appCategory}
-                        onChange={handleFormChange}
-                        placeholder="e.g., Social Media, Finance, Shopping"
-                        disabled={isSubmitting}
-                    />
-
-
-                    {/* Data Shared Checkboxes (Grouped) */}
-                    <div className="mb-4">
-                         <label className="block text-sm font-medium text-gray-700 mb-2">Data Categories Shared (Select all that apply)</label>
-                         <div className="space-y-3">
-                            {Object.entries(CATEGORY_GROUPS).map(([groupName, categories]) => (
-                                <div key={groupName} className='p-3 border rounded-md border-gray-200 bg-gray-50/50'>
-                                    <h4 className='font-medium text-sm text-gray-600 mb-2'>{groupName}</h4>
-                                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5'>
-                                        {categories.map(category => (
-                                            <label key={category} className="flex items-center space-x-2 text-sm">
-                                                <input
-                                                    type="checkbox"
-                                                    name="dataSharedCheckbox" // Use a common name for potential reset
-                                                    value={category}
-                                                    onChange={handleCategoryChange}
-                                                    checked={selectedDataCategories.includes(category)}
-                                                    disabled={isSubmitting}
-                                                    className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                                />
-                                                <span>{category}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                         </div>
-                    </div>
-
-                    <TextareaField
-                        label="Notes (Optional)"
-                        id="notes"
-                        value={formData.notes}
-                        onChange={handleFormChange}
-                        placeholder="Any specific details, e.g., 'Used for work account only'"
-                        disabled={isSubmitting}
-                    />
-
-                     {/* Form Error Display */}
-                    {formError && (
-                        <p className="text-sm text-red-600 mb-3">{formError}</p>
-                    )}
-
-                    {/* Submit Button */}
-                    <div className="text-right">
-                    <button
-                            type="submit"
-                            disabled={isSubmitting || !formData.appName || selectedDataCategories.length === 0}
-                            className="inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                             {isSubmitting ? 'Adding...' : 'Add App Entry'}
-                        </button>
-                    </div>
-                </form>
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold text-foreground">App Data Tracker</h1>
+                    <p className="text-muted-foreground mt-1">Log which apps have access to your personal data.</p>
+                </div>
+                {/* We will replace this button with a DialogTrigger later if the form is in a modal */}
+                {/* For now, form is inline */}
             </div>
+
+            {/* Add New Entry Form using Card */}
+            <Card className="mb-8">
+                <CardHeader>
+                    <CardTitle className="flex items-center text-xl">
+                        <PlusCircleIcon className='h-6 w-6 mr-2 text-primary'/>
+                        Log New App/Service
+                    </CardTitle>
+                    <CardDescription>Fill in the details of the app and the data you've shared.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleAddEntry} className="space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="appName">App/Website Name <span className="text-destructive">*</span></Label>
+                            <Input id="appName" name="appName" value={formData.appName} onChange={handleFormChange} placeholder="e.g., Facebook, MyBank App" required disabled={isSubmitting} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="appUrl">App URL (Optional)</Label>
+                            <Input id="appUrl" name="appUrl" type="url" value={formData.appUrl} onChange={handleFormChange} placeholder="e.g., https://facebook.com" disabled={isSubmitting} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="appCategory">App Category (Optional)</Label>
+                            <Input id="appCategory" name="appCategory" value={formData.appCategory} onChange={handleFormChange} placeholder="e.g., Social Media, Finance" disabled={isSubmitting} />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium">Data Categories Shared <span className="text-destructive">*</span></Label>
+                            <div className="space-y-4 mt-2">
+                                {Object.entries(CATEGORY_GROUPS).map(([groupName, categories]) => (
+                                    <div key={groupName} className='p-4 border rounded-md bg-card'>
+                                        <h4 className='font-medium text-md text-card-foreground mb-3'>{groupName}</h4>
+                                        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3'>
+                                            {categories.map(category => (
+                                                <div key={category} className="flex items-center space-x-2">
+                                                    <Checkbox
+                                                        id={`data-${category.replace(/\s+/g, '-')}`}
+                                                        checked={selectedDataCategories.includes(category)}
+                                                        onCheckedChange={(checked) => handleCategoryChange(category, Boolean(checked))} // Ensure boolean
+                                                        disabled={isSubmitting}
+                                                    />
+                                                    <Label htmlFor={`data-${category.replace(/\s+/g, '-')}`} className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
+                                                        {category}
+                                                    </Label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="notes">Notes (Optional)</Label>
+                            <Textarea id="notes" name="notes" value={formData.notes} onChange={handleFormChange} placeholder="Any specific details..." disabled={isSubmitting} />
+                        </div>
+
+                        {formError && ( <p className="text-sm font-medium text-destructive">{formError}</p> )}
+
+                        <div className="flex justify-end pt-2">
+                            <Button type="submit" disabled={isSubmitting || !formData.appName || selectedDataCategories.length === 0} size="lg">
+                                {isSubmitting ? (
+                                    <> <RefreshIcon className="animate-spin h-4 w-4 mr-2"/> Adding... </>
+                                ) : ( 'Add App Entry' )}
+                            </Button>
+                        </div>
+                    </form>
+                </CardContent>
+            </Card>
 
             {/* Logged Entries List Section */}
             <div>
-                <h2 className="text-xl font-semibold mb-4 text-gray-700">Logged Apps</h2>
-                 {isLoading && <p className='text-gray-500'>Loading entries...</p>}
-                 {!isLoading && error && <p className='text-red-600 bg-red-50 p-3 rounded border border-red-200'>Error loading entries: {error}</p>}
-                 {!isLoading && !error && entries.length === 0 && (
-                    <p className='text-gray-500 bg-gray-50 p-4 rounded-md border border-gray-200'>You haven't logged any apps yet. Use the form above to start.</p>
-                 )}
-                 {!isLoading && !error && entries.length > 0 && (
-                     <div className="space-y-3">
+                <h2 className="text-2xl font-semibold mb-6 text-foreground">Logged Apps</h2>
+                {isLoading && <p className='text-center text-muted-foreground py-8'>Loading entries...</p>}
+                {!isLoading && error &&
+                    <Card className="border-destructive bg-destructive/10">
+                        <CardContent className="pt-6">
+                            <p className='text-center font-medium text-destructive'>{error}</p>
+                        </CardContent>
+                    </Card>
+                }
+                {!isLoading && !error && entries.length === 0 && (
+                    <Card>
+                        <CardContent className="pt-6">
+                            <p className='text-center text-muted-foreground'>You haven't logged any apps yet. Use the form above to start.</p>
+                        </CardContent>
+                    </Card>
+                )}
+                {!isLoading && !error && entries.length > 0 && (
+                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"> {/* Use grid for card layout */}
                          {entries.map(entry => (
                              <AppTrackerItem
                                 key={entry._id}
                                 entry={entry}
-                                onDelete={handleItemDeleted} // Pass callback
+                                onDelete={handleItemDeleted}
+                                // onEdit will be added when we implement the modal edit flow
                              />
                          ))}
                      </div>
