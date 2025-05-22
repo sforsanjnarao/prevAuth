@@ -163,7 +163,7 @@ function DashboardPage() {
                 variant={isVerified ? 'success' : 'warning'}
                 className="text-xs mt-1 text-gray-500"
               >
-                {isVerified ? 'Verified' : 'Unverified'}
+                {isVerified ? 'Verified' : <Link to='/verify-email'>Unverified</Link>}
               </Badge>
             </div>
           </div>

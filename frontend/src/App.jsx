@@ -20,7 +20,7 @@ import DashboardPage from './views/Dashboard';
 
 function App() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen max-w-screen overflow-x-hidden">
       {/* Navbar appears on every page */}
       <div className='fixed w-full z-30 top-0'>
         <Navbar />
