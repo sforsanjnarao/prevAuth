@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
+import { ShieldCheck } from 'lucide-react'
 
 function Navbar() {
   const dispatch = useDispatch()
@@ -65,10 +66,12 @@ function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Brand Logo */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="flex-shrink-0 text-white font-bold text-xl bg-blue-600/20 px-3 py-1 rounded-md">
-                Secure<span className="text-blue-400">Suite</span>
-              </div>
+             <Link
+              to="/"
+              className="flex items-center gap-2 text-white text-2xl font-bold"
+            >
+              <ShieldCheck className="h-6 w-6 text-blue-400" />
+              Secure<span className="text-blue-400">Suite</span>
             </Link>
           </div>
 
