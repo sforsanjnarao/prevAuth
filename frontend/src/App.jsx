@@ -17,6 +17,8 @@ import AppTrackerItem from './components/AppTrackerItem';
 // import DashboardPage from './views/HomePage';
 import Navbar from './components/Navbar';
 import DashboardPage from './views/Dashboard';
+import NotFound from './views/404NotFound/NotFound';
+import Footer from './components/Footer';
 
 function App() {
   return (
@@ -46,10 +48,13 @@ function App() {
             <Route path='/fakedata/inbox/:id' element={<InboxViewPage/>}/> 
             <Route path='/app-tracker' element={<AppTrackerPage/>}/>
             <Route path='/app-tracker/:id' element={<AppTrackerItem/>}/>
+            <Route path='/*' element={<NotFound/>}/>
           </Route>
         </Routes>
       </main>
 
+{/* Footer */}
+<Footer/>
       {/* Toast Container */}
       <ToastContainer
         position="top-right"  

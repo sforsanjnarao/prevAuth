@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import CodeAnimation from "./CodeAnimation"
 import Features from "./Features"
-import Footer from "@/components/Footer"
 import CTASection from "./CTASection"
 
 const HomePage = () => {
@@ -130,8 +129,7 @@ const HomePage = () => {
       {/* CTA Section */}
      <CTASection/>
 
-      {/* Footer */}
-      <Footer/>
+     
       
     </div>
   )
