@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom'; // Remove BrowserRouter from here
-import HomePage from './views/HomePage';
+import HomePage from './views/Home/HomePage';
 import Login from './views/Login';
 import EmailVerify from './views/EmailVerify';
 import ResetPassword from './views/ResetPassword';

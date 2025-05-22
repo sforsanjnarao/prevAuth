@@ -1,314 +1,352 @@
-import React, { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { logoutUser } from '../api/authApi';
-import { clearAuth } from '../features/authSlice';
-import { toast } from 'react-toastify';
+import { useState } from 'react'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { useSelector, useDispatch } from 'react-redux'
+import { logoutUser } from '../api/authApi'
+import { clearAuth } from '../features/authSlice'
+import { toast } from 'react-toastify'
 import {
-    LockClosedIcon, ShieldCheckIcon, ShieldExclamationIcon, 
-    UserGroupIcon, UserCircleIcon, Cog6ToothIcon, 
-    ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon,
-    ExclamationTriangleIcon, Squares2X2Icon, WrenchScrewdriverIcon
-} from '@heroicons/react/24/outline';
+  LockClosedIcon,
+  ShieldCheckIcon,
+  ShieldExclamationIcon,
+  UserGroupIcon,
+  UserCircleIcon,
+  ArrowLeftOnRectangleIcon,
+  Bars3Icon,
+  XMarkIcon,
+  ExclamationTriangleIcon,
+  Squares2X2Icon,
+  WrenchScrewdriverIcon,
+  CogIcon,
+  UserIcon
+} from '@heroicons/react/24/outline'
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle
+} from "@/components/ui/navigation-menu"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { cn } from "@/lib/utils"
 
 function Navbar() {
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
-    const { isAuthenticated, isVerified, user } = useSelector((state) => state.auth);
-    const userName = user?.name || 'User';
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [isToolsOpen, setIsToolsOpen] = useState(false);
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const { isAuthenticated, isVerified, user } = useSelector((state) => state.auth)
+  const userName = user?.name || 'User'
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-    const handleLogout = async () => {
-        try {
-            await logoutUser();
-            dispatch(clearAuth());
-            toast.success("Logged out successfully.");
-            navigate('/login');
-        } catch (error) {
-            toast.error("Logout failed. Please try again.");
-            console.error("Logout Error:", error);
-            dispatch(clearAuth());
-            navigate('/login');
-        }
-    };
+  const handleLogout = async () => {
+    try {
+      await logoutUser()
+      dispatch(clearAuth())
+      toast.success("Logged out successfully.")
+      navigate('/login')
+    } catch (error) {
+      toast.error("Logout failed. Please try again.")
+      console.error("Logout Error:", error)
+      dispatch(clearAuth())
+      navigate('/login')
+    }
+  }
 
-    const navLinkClass = ({ isActive }) =>
-        `px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`;
+  return (
+    <nav className="bg-[#0a192f] fixed w-full z-50 top-0 border-b border-gray-700/50">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          {/* Brand Logo */}
+          <div className="flex items-center">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="flex-shrink-0 text-white font-bold text-xl bg-blue-600/20 px-3 py-1 rounded-md">
+                Secure<span className="text-blue-400">Suite</span>
+              </div>
+            </Link>
+          </div>
 
-    return (
-        <nav className="bg-gray-800 fixed w-full z-30 top-0 shadow">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div className="flex h-16 items-center justify-between">
-                    {/* Left Side: Brand Logo */}
-                    <div className="flex items-center">
-                        <Link to="/" className="flex-shrink-0 text-white font-bold text-xl">
-                            {/* Replace with logo image in future */}
-                            {/* <img src="/logo.png" alt="Logo" className="h-8 w-auto" /> */}
-                            SecureSuite
-                        </Link>
-                    </div>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-2">
+            {isAuthenticated ? (
+              <>
+                <NavigationMenu>
+                  <NavigationMenuList className="gap-1">
+                    {/* Dashboard Link */}
+                  <NavigationMenuItem>
+  <NavigationMenuLink
+    asChild
+    className={cn(
+      navigationMenuTriggerStyle(),
+      "bg-transparent hover:bg-blue-900/30 text-gray-200 hover:text-white"
+    )}
+  >
+    <Link to="/dashboard" className="flex flex-row items-center">
+      <Squares2X2Icon className="h-5 w-5 mr-2" />
+      Dashboard
+    </Link>
+  </NavigationMenuLink>
+</NavigationMenuItem>
 
-                    {/* Right Side: Navigation Links */}
-                    <div className="hidden md:flex items-center space-x-4">
-                        {isAuthenticated ? (
-                            <>
-                                {/* Dashboard Link */}
-                                <NavLink to="/dashboard" className={navLinkClass}>
-                                    <Squares2X2Icon className="h-5 w-5 inline-block mr-1" />
-                                    Dashboard
-                                </NavLink>
-                                
-                                {/* Tools Dropdown */}
-                                <div className="relative">
-                                    <button 
-                                        onClick={() => setIsToolsOpen(!isToolsOpen)}
-                                        className={`flex items-center ${navLinkClass({ isActive: false })}`}
-                                    >
-                                        <WrenchScrewdriverIcon className="h-5 w-5 inline-block mr-1" />
-                                        Tools
-                                    </button>
-                                    
-                                    {isToolsOpen && (
-                                        <div 
-                                            className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-gray-700 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
-                                            onMouseLeave={() => setIsToolsOpen(false)}
-                                        >
-                                            <Link 
-                                                to="/vault" 
-                                                className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600"
-                                            >
-                                                <LockClosedIcon className="h-4 w-4 inline-block mr-2" />
-                                                Vault
-                                            </Link>
-                                            <Link 
-                                                to="/app-tracker" 
-                                                className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600"
-                                            >
-                                                <ShieldCheckIcon className="h-4 w-4 inline-block mr-2" />
-                                                App Tracker
-                                            </Link>
-                                            <Link 
-                                                to="/breach-check" 
-                                                className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600"
-                                            >
-                                                <ShieldExclamationIcon className="h-4 w-4 inline-block mr-2" />
-                                                Breach Check
-                                            </Link>
-                                            <Link 
-                                                to="/fakedata" 
-                                                className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600"
-                                            >
-                                                <UserGroupIcon className="h-4 w-4 inline-block mr-2" />
-                                                Fake Data
-                                            </Link>
-                                        </div>
-                                    )}
-                                </div>
 
-                                {/* User Profile Dropdown */}
-                                <div className="relative ml-3">
-                                    <button 
-                                        type="button" 
-                                        className="flex max-w-xs items-center rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
-                                        onClick={() => setIsToolsOpen(false)}
-                                    >
-                                        <span className="sr-only">Open user menu</span>
-                                        <UserCircleIcon className="h-8 w-8 text-gray-400 hover:text-white" />
-                                        <span className="text-white ml-2 text-sm font-medium mr-1">
-                                            {userName}
-                                        </span>
-                                        {!isVerified && (
-                                            <ExclamationTriangleIcon className="h-4 w-4 text-yellow-400" />
-                                        )}
-                                    </button>
-                                    
-                                    <div 
-                                        className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden group-focus-within:block hover:block"
-                                    >
-                                        <Link 
-                                            to="/profile" 
-                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                        >
-                                            Your Profile
-                                        </Link>
-                                        <Link 
-                                            to="/settings" 
-                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                        >
-                                            Settings
-                                        </Link>
-                                        <button 
-                                            onClick={handleLogout} 
-                                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                        >
-                                            Sign out
-                                        </button>
-                                    </div>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="space-x-4">
-                                <Link 
-                                    to="/login" 
-                                    className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-                                >
-                                    Log in
-                                </Link>
-                                <Link 
-                                    to="/register" 
-                                    className="text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-md text-sm font-medium"
-                                >
-                                    Sign up
-                                </Link>
-                            </div>
+                    {/* Tools Dropdown */}
+                    <NavigationMenuItem>
+                      <NavigationMenuTrigger className="bg-transparent hover:bg-blue-900/30 text-gray-200 hover:text-white data-[state=open]:bg-blue-900/30">
+                        <WrenchScrewdriverIcon className="h-5 w-5 mr-2" />
+                        Tools
+                      </NavigationMenuTrigger>
+                      <NavigationMenuContent className="bg-[#0a192f] border border-gray-700/50 rounded-lg shadow-xl">
+                        <ul className="grid w-[220px] gap-1 p-2">
+                          <NavLink to="/vault">
+                            <NavigationMenuLink className="hover:bg-blue-900/30 p-3 rounded-md flex items-center text-gray-200 hover:text-white">
+                              <LockClosedIcon className="h-5 w-5 mr-3 text-blue-400" />
+                              <div>
+                                <p className="font-medium">Vault</p>
+                                <p className="text-xs text-gray-400">Secure password storage</p>
+                              </div>
+                            </NavigationMenuLink>
+                          </NavLink>
+                          <NavLink to="/app-tracker">
+                            <NavigationMenuLink className="hover:bg-blue-900/30 p-3 rounded-md flex items-center text-gray-200 hover:text-white">
+                              <ShieldCheckIcon className="h-5 w-5 mr-3 text-blue-400" />
+                              <div>
+                                <p className="font-medium">App Tracker</p>
+                                <p className="text-xs text-gray-400">Manage app permissions</p>
+                              </div>
+                            </NavigationMenuLink>
+                          </NavLink>
+                          <NavLink to="/breach-check">
+                            <NavigationMenuLink className="hover:bg-blue-900/30 p-3 rounded-md flex items-center text-gray-200 hover:text-white">
+                              <ShieldExclamationIcon className="h-5 w-5 mr-3 text-blue-400" />
+                              <div>
+                                <p className="font-medium">Breach Check</p>
+                                <p className="text-xs text-gray-400">Check data breaches</p>
+                              </div>
+                            </NavigationMenuLink>
+                          </NavLink>
+                          <NavLink to="/fakedata">
+                            <NavigationMenuLink className="hover:bg-blue-900/30 p-3 rounded-md flex items-center text-gray-200 hover:text-white">
+                              <UserGroupIcon className="h-5 w-5 mr-3 text-blue-400" />
+                              <div>
+                                <p className="font-medium">Fake Data</p>
+                                <p className="text-xs text-gray-400">Generate test data</p>
+                              </div>
+                            </NavigationMenuLink>
+                          </NavLink>
+                        </ul>
+                      </NavigationMenuContent>
+                    </NavigationMenuItem>
+                  </NavigationMenuList>
+                </NavigationMenu>
+
+                {/* User Profile Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-blue-900/30"
+                    >
+                      <div className="relative flex items-center gap-1">
+                        <UserCircleIcon className="h-7 w-7 text-gray-300" />
+                         <span className="text-gray-200 font-medium">
+                        {userName.split(' ')[0]}
+                      </span>
+                        {!isVerified && (
+                          <ExclamationTriangleIcon className="h-3 w-3 text-yellow-400 " />
                         )}
-                    </div>
+                      </div>
+                     
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent 
+                    className="w-56 bg-[#0a192f] border border-gray-700/50 text-gray-200 rounded-lg shadow-xl"
+                    align="end"
+                  >
+                    <DropdownMenuItem asChild className="hover:bg-blue-900/30 focus:bg-blue-900/30">
+                      <Link to="/profile" className="cursor-pointer flex items-center gap-2">
+                        <UserIcon className="h-4 w-4 text-blue-400" />
+                        Your Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="hover:bg-blue-900/30 focus:bg-blue-900/30">
+                      <Link to="/settings" className="cursor-pointer flex items-center gap-2">
+                        <CogIcon className="h-4 w-4 text-blue-400" />
+                        Settings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={handleLogout}
+                      className="cursor-pointer text-red-400 hover:bg-blue-900/30 focus:bg-blue-900/30 focus:text-red-400 flex items-center gap-2"
+                    >
+                      <ArrowLeftOnRectangleIcon className="h-4 w-4" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <div className="flex gap-2">
+                <Button asChild variant="ghost" className="text-gray-200 hover:bg-blue-900/30 hover:text-white">
+                  <Link to="/login">Log in</Link>
+                </Button>
+                <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
+                  <Link to="/register">Sign up</Link>
+                </Button>
+              </div>
+            )}
+          </div>
 
-                    {/* Mobile menu button */}
-                    <div className="md:hidden flex items-center">
-                        <button
-                            type="button"
-                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            className="inline-flex items-center justify-center rounded-md bg-gray-800 p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
-                            aria-controls="mobile-menu"
-                            aria-expanded={isMobileMenuOpen}
-                        >
-                            <span className="sr-only">Open main menu</span>
-                            {isMobileMenuOpen ? <XMarkIcon className="block h-6 w-6" /> : <Bars3Icon className="block h-6 w-6" />}
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Mobile menu */}
-            <div className={`md:hidden ${isMobileMenuOpen ? 'block' : 'hidden'}`} id="mobile-menu">
-                <div className="space-y-1 px-2 pb-3 pt-2 sm:px-3">
+          {/* Mobile Navigation */}
+          <div className="md:hidden">
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="text-gray-300 hover:bg-blue-900/30 hover:text-white"
+                >
+                  {isMobileMenuOpen ? (
+                    <XMarkIcon className="h-6 w-6" />
+                  ) : (
+                    <Bars3Icon className="h-6 w-6" />
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent 
+                side="right" 
+                className="bg-[#0a192f] text-gray-200 border-l border-gray-700/50 w-full max-w-xs"
+              >
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 space-y-6 py-6">
                     {isAuthenticated ? (
-                        <>
-                            <NavLink 
-                                to="/dashboard" 
-                                className={navLinkClass}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                <Squares2X2Icon className="h-5 w-5 inline-block mr-2" />
-                                Dashboard
-                            </NavLink>
-                            
-                            <div className="pl-2">
-                                <button 
-                                    className="w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-                                    onClick={() => setIsToolsOpen(!isToolsOpen)}
-                                >
-                                    <WrenchScrewdriverIcon className="h-5 w-5 inline-block mr-2" />
-                                    Tools
-                                </button>
-                                
-                                {isToolsOpen && (
-                                    <div className="pl-4 space-y-1 mt-1">
-                                        <Link 
-                                            to="/vault" 
-                                            className="block px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                        >
-                                            <LockClosedIcon className="h-4 w-4 inline-block mr-2" />
-                                            Vault
-                                        </Link>
-                                        <Link 
-                                            to="/app-tracker" 
-                                            className="block px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                        >
-                                            <ShieldCheckIcon className="h-4 w-4 inline-block mr-2" />
-                                            App Tracker
-                                        </Link>
-                                        <Link 
-                                            to="/breach-check" 
-                                            className="block px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                        >
-                                            <ShieldExclamationIcon className="h-4 w-4 inline-block mr-2" />
-                                            Breach Check
-                                        </Link>
-                                        <Link 
-                                            to="/fakedata" 
-                                            className="block px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                        >
-                                            <UserGroupIcon className="h-4 w-4 inline-block mr-2" />
-                                            Fake Data
-                                        </Link>
-                                    </div>
+                      <>
+                        <div className="px-4">
+                          <div className="flex items-center gap-3 mb-6 p-3 bg-blue-900/20 rounded-lg">
+                            <UserCircleIcon className="h-10 w-10 text-blue-400" />
+                            <div>
+                              <p className="font-medium text-white">
+                                {userName}
+                                {!isVerified && (
+                                  <ExclamationTriangleIcon className="h-4 w-4 text-yellow-400 ml-2 inline" />
                                 )}
+                              </p>
+                              <p className="text-sm text-gray-400">Premium Member</p>
                             </div>
-                        </>
-                    ) : null}
-                </div>
-                
-                <div className="border-t border-gray-700 pb-3 pt-4">
-                    {isAuthenticated ? (
-                        <>
-                            <div className="flex items-center px-5">
-                                <div className="flex-shrink-0">
-                                    <UserCircleIcon className="h-10 w-10 text-gray-400" />
-                                </div>
-                                <div className="ml-3">
-                                    <div className="text-base font-medium leading-none text-white flex items-center">
-                                        {userName}
-                                        {!isVerified && (
-                                            <ExclamationTriangleIcon className="h-4 w-4 text-yellow-400 ml-2" />
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="mt-3 space-y-1 px-2">
-                                <Link 
-                                    to="/profile" 
-                                    className="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                    Your Profile
-                                </Link>
-                                <Link 
-                                    to="/settings" 
-                                    className="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                    Settings
-                                </Link>
-                                <button 
-                                    onClick={() => {
-                                        handleLogout();
-                                        setIsMobileMenuOpen(false);
-                                    }}
-                                    className="block w-full text-left rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white"
-                                >
-                                    Sign out
-                                </button>
-                            </div>
-                        </>
-                    ) : (
-                        <div className="space-y-1 px-2">
-                            <Link 
-                                to="/login" 
-                                className="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                Log in
-                            </Link>
-                            <Link 
-                                to="/register" 
-                                className="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                Sign up
-                            </Link>
+                          </div>
                         </div>
+
+                        <nav className="space-y-1 px-2">
+                          <NavLink
+                            to="/dashboard"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={({ isActive }) =>
+                              `flex items-center gap-3 px-4 py-3 rounded-lg ${isActive ? 'bg-blue-900/30 text-white' : 'hover:bg-blue-900/20 text-gray-300 hover:text-white'}`
+                            }
+                          >
+                            <Squares2X2Icon className="h-5 w-5" />
+                            Dashboard
+                          </NavLink>
+
+                          <div className="px-2">
+                            <p className="text-gray-400 text-xs font-medium px-4 py-2 uppercase tracking-wider">Tools</p>
+                            <div className="space-y-1">
+                              <NavLink
+                                to="/vault"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className={({ isActive }) =>
+                                  `flex items-center gap-3 px-4 py-3 rounded-lg ${isActive ? 'bg-blue-900/30 text-white' : 'hover:bg-blue-900/20 text-gray-300 hover:text-white'}`
+                                }
+                              >
+                                <LockClosedIcon className="h-5 w-5" />
+                                Vault
+                              </NavLink>
+                              <NavLink
+                                to="/app-tracker"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className={({ isActive }) =>
+                                  `flex items-center gap-3 px-4 py-3 rounded-lg ${isActive ? 'bg-blue-900/30 text-white' : 'hover:bg-blue-900/20 text-gray-300 hover:text-white'}`
+                                }
+                              >
+                                <ShieldCheckIcon className="h-5 w-5" />
+                                App Tracker
+                              </NavLink>
+                              <NavLink
+                                to="/breach-check"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className={({ isActive }) =>
+                                  `flex items-center gap-3 px-4 py-3 rounded-lg ${isActive ? 'bg-blue-900/30 text-white' : 'hover:bg-blue-900/20 text-gray-300 hover:text-white'}`
+                                }
+                              >
+                                <ShieldExclamationIcon className="h-5 w-5" />
+                                Breach Check
+                              </NavLink>
+                              <NavLink
+                                to="/fakedata"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className={({ isActive }) =>
+                                  `flex items-center gap-3 px-4 py-3 rounded-lg ${isActive ? 'bg-blue-900/30 text-white' : 'hover:bg-blue-900/20 text-gray-300 hover:text-white'}`
+                                }
+                              >
+                                <UserGroupIcon className="h-5 w-5" />
+                                Fake Data
+                              </NavLink>
+                            </div>
+                          </div>
+                        </nav>
+                      </>
+                    ) : (
+                      <nav className="space-y-2 px-2">
+                        <NavLink
+                          to="/login"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className={({ isActive }) =>
+                            `block px-4 py-3 rounded-lg ${isActive ? 'bg-blue-900/30 text-white' : 'hover:bg-blue-900/20 text-gray-300 hover:text-white'}`
+                          }
+                        >
+                          Log in
+                        </NavLink>
+                        <NavLink
+                          to="/register"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className={({ isActive }) =>
+                            `block px-4 py-3 rounded-lg ${isActive ? 'bg-blue-900/30 text-white' : 'hover:bg-blue-900/20 text-gray-300 hover:text-white'}`
+                          }
+                        >
+                          Sign up
+                        </NavLink>
+                      </nav>
                     )}
+                  </div>
+
+                  {isAuthenticated && (
+                    <div className="pb-6 px-4">
+                      <Button
+                        variant="outline"
+                        className="w-full text-red-400 border-red-400/30 hover:bg-red-400/10 hover:text-red-300 gap-2"
+                        onClick={() => {
+                          handleLogout()
+                          setIsMobileMenuOpen(false)
+                        }}
+                      >
+                        <ArrowLeftOnRectangleIcon className="h-5 w-5" />
+                        Sign out
+                      </Button>
+                    </div>
+                  )}
                 </div>
-            </div>
-        </nav>
-    );
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+      </div>
+    </nav>
+  )
 }
 
-export default Navbar;
+export default Navbar
